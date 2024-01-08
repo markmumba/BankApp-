@@ -14,6 +14,18 @@ WHERE
   user_id = $1;
 
 
+-- name: UpdateUser : one 
+UPDATE
+  users
+SET
+  username = $1,
+  password_hash = $2,
+  email = $3,
+  full_name = $4
+WHERE
+  user_id = $5;
+
+
 -- name: ListAllUser :many
 SELECT
   *
