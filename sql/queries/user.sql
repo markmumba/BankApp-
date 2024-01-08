@@ -14,7 +14,7 @@ WHERE
   user_id = $1;
 
 
--- name: UpdateUser : one 
+-- name: UpdateUser :one 
 UPDATE
   users
 SET
@@ -23,7 +23,7 @@ SET
   email = $3,
   full_name = $4
 WHERE
-  user_id = $5;
+  user_id = $5 RETURNING *;
 
 
 -- name: ListAllUser :many

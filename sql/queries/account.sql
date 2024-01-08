@@ -30,8 +30,7 @@ UPDATE
 SET
   balance = balance + $1
 WHERE
-  account_id = $2;
-
+  account_id = $2 RETURNING *;
 
 -- name: Withdraw :one 
 UPDATE
@@ -39,7 +38,7 @@ UPDATE
 SET
   balance = balance - $1
 WHERE
-  account_id = $2;
+  account_id = $2 RETURNING *;
 
 
 -- name: ViewTransactions :many 
