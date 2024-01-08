@@ -9,10 +9,10 @@ CREATE TABLE
   );
 
 
-CREATE INDEX users_on_email ON users(email);
+CREATE INDEX idx_users_on_email ON users(email);
 
 
-CREATE INDEX users_on_username ON users(username);
+CREATE INDEX idx_users_on_username ON users(username);
 
 
 -- +goose Down 
