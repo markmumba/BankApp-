@@ -1,13 +1,12 @@
 package config
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
 )
-
-
 
 func Config(key string) string {
 	err := godotenv.Load(".env")
@@ -17,3 +16,5 @@ func Config(key string) string {
 
 	return os.Getenv(key)
 }
+
+var Conn, err = sql.Open("postgres",Config("DATABASE_URL"))

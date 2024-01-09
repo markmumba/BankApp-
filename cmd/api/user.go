@@ -33,14 +33,14 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 		fmt.Println(err.Error())
 	}
 
-	result, err := app.DB.CreateUser(app.ctx, database.CreateUserParams{
+	result, err := app.DB.CreateUser(app.Ctx, database.CreateUserParams{
 		Username:     user.UserName,
 		Email:        user.Email,
 		FullName:     user.FullName,
 		PasswordHash: string(hashedPassword),
 	})
 
-	account, err := app.DB.CreateAccount(app.ctx, database.CreateAccountParams{
+	account, err := app.DB.CreateAccount(app.Ctx, database.CreateAccountParams{
 		UserID:      uuid.NullUUID{UUID: result.UserID, Valid: true},
 		AccountType: Checking,
 	})

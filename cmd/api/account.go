@@ -1,5 +1,7 @@
 package main
 
+//TODO  refuse withdrawal when money exceeds balance
+
 import (
 	"database/sql"
 	"fmt"
@@ -34,7 +36,7 @@ func (app *Applicaton) CreateSavingAccount(c echo.Context) error {
 	id := c.Param("id")
 	parsedId := ConvertStringToUuid(id)
 
-	account, err := app.DB.CreateAccount(app.ctx, database.CreateAccountParams{
+	account, err := app.DB.CreateAccount(app.Ctx, database.CreateAccountParams{
 		UserID:      uuid.NullUUID{UUID: parsedId, Valid: true},
 		AccountType: Savings,
 	})
@@ -58,7 +60,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 	err := c.Bind(&accountStruct)
 	parsedId := ConvertStringToUuid(id)
 
-	userAccount, err := app.DB.FindAccount(app.ctx, parsedId)
+	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve user accounts"})
 	}
@@ -66,7 +68,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 	for _, acc := range userAccount {
 		if accountStruct.AccountType == acc.AccountType {
 			newTotal := ConvertStringToDecimal(acc.Balance).Add(ConvertStringToDecimal(accountStruct.Amount))
-			account, err := app.DB.Deposit(app.ctx, database.DepositParams{
+			account, err := app.DB.Deposit(app.Ctx, database.DepositParams{
 				Balance:   newTotal.String(),
 				AccountID: acc.AccountID,
 			})
@@ -93,7 +95,7 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 	err := c.Bind(&accountStruct)
 	parsedId := ConvertStringToUuid(id)
 
-	userAccount, err := app.DB.FindAccount(app.ctx, parsedId)
+	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve user accounts"})
 	}
@@ -101,7 +103,7 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 	for _, acc := range userAccount {
 		if accountStruct.AccountType == acc.AccountType {
 			newTotal := ConvertStringToDecimal(acc.Balance).Sub(ConvertStringToDecimal(accountStruct.Amount))
-			account, err := app.DB.Withdraw(app.ctx, database.WithdrawParams{
+			account, err := app.DB.Withdraw(app.Ctx, database.WithdrawParams{
 				Balance:   newTotal.String(),
 				AccountID: acc.AccountID,
 			})
@@ -128,7 +130,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	id := c.Param("id")
 	err := c.Bind(&account)
 	parsedId := ConvertStringToUuid(id)
-	userAccount, err := app.DB.FindAccount(app.ctx, parsedId)
+	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve user accounts"})
 
@@ -137,7 +139,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	found := false
 	for _, acc := range userAccount {
 		if account.AccountType == acc.AccountType {
-			transactions, err = app.DB.ViewTransactions(app.ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
+			transactions, err = app.DB.ViewTransactions(app.Ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve transactions"})
 			}
