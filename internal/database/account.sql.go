@@ -139,7 +139,7 @@ func (q *Queries) FindAccount(ctx context.Context, userID uuid.UUID) ([]FindAcco
 
 const viewTransactions = `-- name: ViewTransactions :many
 SELECT
-  transaction_id, account_id, recepient_id, type, timestamp
+  transaction_id, account_id, recepient_id, amount, type, timestamp
 FROM
   transactions
 WHERE
@@ -162,6 +162,7 @@ func (q *Queries) ViewTransactions(ctx context.Context, accountID sql.NullInt32)
 			&i.TransactionID,
 			&i.AccountID,
 			&i.RecepientID,
+			&i.Amount,
 			&i.Type,
 			&i.Timestamp,
 		); err != nil {

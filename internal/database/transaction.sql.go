@@ -10,28 +10,26 @@ import (
 	"database/sql"
 )
 
-const saveTransaction = `-- name: SaveTransaction :one
+const saveTransaction = `-- name: SaveTransaction :exec
 INSERT INTO
-  transactions (account_id, recepient_id, type)
+  transactions (account_id, recepient_id,amount, type)
 VALUES
-  ($1, $2, $3) RETURNING transaction_id, account_id, recepient_id, type, timestamp
+  ($1, $2, $3 ,$4) RETURNING transaction_id, account_id, recepient_id, amount, type, timestamp
 `
 
 type SaveTransactionParams struct {
 	AccountID   sql.NullInt32
 	RecepientID sql.NullInt32
+	Amount      string
 	Type        string
 }
 
-func (q *Queries) SaveTransaction(ctx context.Context, arg SaveTransactionParams) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, saveTransaction, arg.AccountID, arg.RecepientID, arg.Type)
-	var i Transaction
-	err := row.Scan(
-		&i.TransactionID,
-		&i.AccountID,
-		&i.RecepientID,
-		&i.Type,
-		&i.Timestamp,
+func (q *Queries) SaveTransaction(ctx context.Context, arg SaveTransactionParams) error {
+	_, err := q.db.ExecContext(ctx, saveTransaction,
+		arg.AccountID,
+		arg.RecepientID,
+		arg.Amount,
+		arg.Type,
 	)
-	return i, err
+	return err
 }

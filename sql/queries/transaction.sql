@@ -1,5 +1,5 @@
--- name: SaveTransaction :one
+-- name: SaveTransaction :exec
 INSERT INTO
-  transactions (account_id, recepient_id, type)
+  transactions (account_id, recepient_id,amount, type)
 VALUES
-  ($1, $2, $3) RETURNING *;
+  ($1, $2, $3 ,$4) RETURNING *;

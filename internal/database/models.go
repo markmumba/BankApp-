@@ -23,6 +23,7 @@ type Transaction struct {
 	TransactionID int32
 	AccountID     sql.NullInt32
 	RecepientID   sql.NullInt32
+	Amount        string
 	Type          string
 	Timestamp     sql.NullTime
 }
