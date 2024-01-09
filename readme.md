@@ -32,7 +32,7 @@ This is a web-based banking application built using the Echo web framework. The 
 
     ```bash
     git clone https://github.com/markmumba/BankApp-.git
-    cd online-banking-app
+    cd BankApp
     ```
 
 2. Run database migrations using Goose:
@@ -45,7 +45,7 @@ This is a web-based banking application built using the Echo web framework. The 
 
     ```bash
     go build
-    ./online-banking-app
+    ./BankApp
     ```
 
 4. Access the application in your web browser at [http://localhost:4000](http://localhost:4000).
