@@ -59,7 +59,7 @@ const deposit = `-- name: Deposit :one
 UPDATE
   accounts
 SET
-  balance = balance + $1
+  balance = $1
 WHERE
   account_id = $2 RETURNING account_id, user_id, account_number, account_type, balance, date_opened
 `
@@ -83,10 +83,11 @@ func (q *Queries) Deposit(ctx context.Context, arg DepositParams) (Account, erro
 	return i, err
 }
 
-const findAccount = `-- name: FindAccount :one
+const findAccount = `-- name: FindAccount :many
 SELECT
   u.user_id,
   u.username,
+  a.account_id,
   a.account_number,
   a.account_type,
   a.balance
@@ -100,22 +101,40 @@ WHERE
 type FindAccountRow struct {
 	UserID        uuid.UUID
 	Username      string
+	AccountID     int32
 	AccountNumber string
 	AccountType   string
 	Balance       string
 }
 
-func (q *Queries) FindAccount(ctx context.Context, userID uuid.UUID) (FindAccountRow, error) {
-	row := q.db.QueryRowContext(ctx, findAccount, userID)
-	var i FindAccountRow
-	err := row.Scan(
-		&i.UserID,
-		&i.Username,
-		&i.AccountNumber,
-		&i.AccountType,
-		&i.Balance,
-	)
-	return i, err
+func (q *Queries) FindAccount(ctx context.Context, userID uuid.UUID) ([]FindAccountRow, error) {
+	rows, err := q.db.QueryContext(ctx, findAccount, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindAccountRow
+	for rows.Next() {
+		var i FindAccountRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.AccountID,
+			&i.AccountNumber,
+			&i.AccountType,
+			&i.Balance,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const viewTransactions = `-- name: ViewTransactions :many
@@ -163,7 +182,7 @@ const withdraw = `-- name: Withdraw :one
 UPDATE
   accounts
 SET
-  balance = balance - $1
+  balance = $1
 WHERE
   account_id = $2 RETURNING account_id, user_id, account_number, account_type, balance, date_opened
 `

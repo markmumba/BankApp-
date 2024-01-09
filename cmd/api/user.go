@@ -11,8 +11,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db *DbInstance
-
 type newuserDetails struct {
 	UserName      string          `json:"user_name"`
 	Email         string          `json:"email"`
@@ -22,9 +20,7 @@ type newuserDetails struct {
 	Balance       decimal.Decimal `json:"balance"`
 }
 
-func CreateUser(c echo.Context) error {
-
-	ctx := c.Request().Context()
+func (app *Applicaton) CreateUser(c echo.Context) error {
 
 	var user User
 	err := c.Bind(&user)
@@ -37,14 +33,14 @@ func CreateUser(c echo.Context) error {
 		fmt.Println(err.Error())
 	}
 
-	result, err := db.DB.CreateUser(ctx, database.CreateUserParams{
+	result, err := app.DB.CreateUser(app.ctx, database.CreateUserParams{
 		Username:     user.UserName,
 		Email:        user.Email,
 		FullName:     user.FullName,
 		PasswordHash: string(hashedPassword),
 	})
 
-	account, err := db.DB.CreateAccount(ctx, database.CreateAccountParams{
+	account, err := app.DB.CreateAccount(app.ctx, database.CreateAccountParams{
 		UserID:      uuid.NullUUID{UUID: result.UserID, Valid: true},
 		AccountType: Checking,
 	})

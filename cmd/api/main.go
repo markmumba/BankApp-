@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -10,6 +11,11 @@ import (
 	"github.com/markmumba/chasebank/config"
 	"github.com/markmumba/chasebank/internal/database"
 )
+
+type Applicaton struct {
+	DB  *database.Queries
+	ctx context.Context
+}
 
 type DbInstance struct {
 	DB *database.Queries
@@ -25,13 +31,14 @@ func main() {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-	DbInstance := DbInstance{
-		DB: database.New(conn),
+	Applicaton := &Applicaton{
+		DB:  database.New(conn),
+		ctx: e.NewContext(nil,nil).Request().Context(),
 	}
+
 	defer conn.Close()
 
-	fmt.Print(DbInstance)
-	SetupRouter(e)
+	Applicaton.SetupRouter(e)
 	e.Logger.Fatal(e.Start(":" + config.Config("PORT")))
 
 }

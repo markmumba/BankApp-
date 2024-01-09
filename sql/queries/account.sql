@@ -10,10 +10,11 @@ VALUES
   ) RETURNING *;
 
 
--- name: FindAccount :one
+-- name: FindAccount :many
 SELECT
   u.user_id,
   u.username,
+  a.account_id,
   a.account_number,
   a.account_type,
   a.balance
@@ -28,15 +29,16 @@ WHERE
 UPDATE
   accounts
 SET
-  balance = balance + $1
+  balance = $1
 WHERE
   account_id = $2 RETURNING *;
+
 
 -- name: Withdraw :one 
 UPDATE
   accounts
 SET
-  balance = balance - $1
+  balance = $1
 WHERE
   account_id = $2 RETURNING *;
 
