@@ -5,6 +5,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ import (
 func ConvertStringToUuid(id string) uuid.UUID {
 	parsedId, err := uuid.Parse(id)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err.Error())
 	}
 	return parsedId
 }
@@ -24,7 +25,7 @@ func ConvertStringToUuid(id string) uuid.UUID {
 func ConvertStringToDecimal(amount string) decimal.Decimal {
 	decimalAmount, err := decimal.NewFromString(amount)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return decimal.Zero
 	}
 	return decimalAmount
@@ -41,7 +42,7 @@ func (app *Applicaton) CreateSavingAccount(c echo.Context) error {
 		AccountType: Savings,
 	})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to Create account"})
+		app.ServerError(c, "Failed to create account ")
 	}
 
 	fmt.Println(account)
@@ -62,7 +63,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve user accounts"})
+		app.ServerError(c, "Failed to retrieve all accounts")
 	}
 
 	for _, acc := range userAccount {
@@ -73,7 +74,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 				AccountID: acc.AccountID,
 			})
 			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to make Deposit "})
+				app.ServerError(c, "Failed to make Deposit")
 			}
 			app.SaveTransaction(acc.AccountID, 0, accountStruct.Amount, Deposit)
 			jsonResp = Account{
@@ -97,7 +98,7 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve user accounts"})
+		app.ServerError(c, "Failed to retrieve user accounts ")
 	}
 
 	for _, acc := range userAccount {
@@ -108,7 +109,7 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 				AccountID: acc.AccountID,
 			})
 			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to complete withdrawal"})
+				app.ServerError(c, "Failed to complete withdrawal")
 			}
 			app.SaveTransaction(acc.AccountID, 0, accountStruct.Amount, Withdraw)
 			jsonResp = Account{
@@ -132,7 +133,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	parsedId := ConvertStringToUuid(id)
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve user accounts"})
+		app.ServerError(c, "Failed to retrieve user accounts")
 
 	}
 
@@ -141,7 +142,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 		if account.AccountType == acc.AccountType {
 			transactions, err = app.DB.ViewTransactions(app.Ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
 			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve transactions"})
+				app.ServerError(c, "Failed to retrieve the transactions ")
 			}
 			found = true
 			break
