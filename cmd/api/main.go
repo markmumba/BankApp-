@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -11,6 +12,7 @@ import (
 )
 
 type Applicaton struct {
+	SDB *sql.DB
 	DB  *database.Queries
 	Ctx context.Context
 }
@@ -21,6 +23,7 @@ func main() {
 	e.Use(middleware.CORS())
 
 	Applicaton := &Applicaton{
+		SDB: config.Conn,
 		DB:  database.New(config.Conn),
 		Ctx: e.NewContext(nil, nil).Request().Context(),
 	}

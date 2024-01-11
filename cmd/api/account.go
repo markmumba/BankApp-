@@ -163,3 +163,62 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, jsonResp)
 }
+
+func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
+	type Funds struct {
+		Amount string `json:"amount"`
+	}
+	var fundInstance Funds
+
+	id := c.Param("id")
+	err := c.Bind(&fundInstance)
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+	parsedId := ConvertStringToUuid(id)
+
+	accounts, err := app.DB.FindAccount(app.Ctx, parsedId)
+	if err != nil {
+		app.ServerError(c, "Could not find the users accounts")
+	}
+
+	tx, err := app.SDB.Begin()
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+	defer tx.Rollback()
+
+	qtx := app.DB.WithTx(tx)
+
+	for _, account := range accounts {
+		err = qtx.DebitChecking(app.Ctx, database.DebitCheckingParams{
+			AccountID: account.AccountID,
+			Balance:   ConvertStringToDecimal(account.Balance).Sub(ConvertStringToDecimal(fundInstance.Amount)).String(),
+		})
+		if err != nil {
+			app.ServerError(c, err.Error())
+
+		}
+		err = qtx.CreditSaving(app.Ctx, database.CreditSavingParams{
+			AccountID: account.AccountID,
+			Balance:   ConvertStringToDecimal(account.Balance).Add(ConvertStringToDecimal(fundInstance.Amount)).String(),
+		})
+		if err != nil {
+			app.ServerError(c, err.Error())
+		}
+
+		break
+	}
+
+		err = tx.Commit()
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"Success": "Transfer succesful"})
+
+}
+
+func (app *Applicaton) TransferFunds (c *echo.Context) error {
+	return nil 
+}

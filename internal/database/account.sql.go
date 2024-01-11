@@ -55,6 +55,46 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	return i, err
 }
 
+const creditSaving = `-- name: CreditSaving :exec
+UPDATE
+  accounts
+SET
+  balance =  $1
+WHERE
+  account_id = $2
+  AND account_type = 'savings'
+`
+
+type CreditSavingParams struct {
+	Balance   string
+	AccountID int32
+}
+
+func (q *Queries) CreditSaving(ctx context.Context, arg CreditSavingParams) error {
+	_, err := q.db.ExecContext(ctx, creditSaving, arg.Balance, arg.AccountID)
+	return err
+}
+
+const debitChecking = `-- name: DebitChecking :exec
+UPDATE
+  accounts
+SET
+  balance = $1
+WHERE
+  account_id = $2
+  AND account_type = 'checking'
+`
+
+type DebitCheckingParams struct {
+	Balance   string
+	AccountID int32
+}
+
+func (q *Queries) DebitChecking(ctx context.Context, arg DebitCheckingParams) error {
+	_, err := q.db.ExecContext(ctx, debitChecking, arg.Balance, arg.AccountID)
+	return err
+}
+
 const deposit = `-- name: Deposit :one
 UPDATE
   accounts

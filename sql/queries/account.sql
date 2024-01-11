@@ -55,6 +55,28 @@ ORDER BY
   timestamp DESC;
 
 
+
+
+-- name: DebitChecking :exec
+UPDATE
+  accounts
+SET
+  balance = $1
+WHERE
+  account_id = $2
+  AND account_type = 'checking';
+
+
+-- name: CreditSaving :exec
+UPDATE
+  accounts
+SET
+  balance =  $1
+WHERE
+  account_id = $2
+  AND account_type = 'savings';
+
+
 -- name: CloseAccount :exec
 DELETE FROM
   accounts
