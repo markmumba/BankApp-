@@ -59,7 +59,7 @@ const creditSaving = `-- name: CreditSaving :exec
 UPDATE
   accounts
 SET
-  balance =  $1
+  balance = $1
 WHERE
   account_id = $2
   AND account_type = 'savings'
@@ -175,6 +175,52 @@ func (q *Queries) FindAccount(ctx context.Context, userID uuid.UUID) ([]FindAcco
 		return nil, err
 	}
 	return items, nil
+}
+
+const findAccountByAccNo = `-- name: FindAccountByAccNo :one
+SELECT
+  account_id, user_id, account_number, account_type, balance, date_opened
+FROM
+  accounts
+WHERE
+  account_number = $1
+`
+
+func (q *Queries) FindAccountByAccNo(ctx context.Context, accountNumber string) (Account, error) {
+	row := q.db.QueryRowContext(ctx, findAccountByAccNo, accountNumber)
+	var i Account
+	err := row.Scan(
+		&i.AccountID,
+		&i.UserID,
+		&i.AccountNumber,
+		&i.AccountType,
+		&i.Balance,
+		&i.DateOpened,
+	)
+	return i, err
+}
+
+const findAccountById = `-- name: FindAccountById :one
+SELECT
+  account_id, user_id, account_number, account_type, balance, date_opened
+FROM
+  accounts
+WHERE
+  account_id = $1
+`
+
+func (q *Queries) FindAccountById(ctx context.Context, accountID int32) (Account, error) {
+	row := q.db.QueryRowContext(ctx, findAccountById, accountID)
+	var i Account
+	err := row.Scan(
+		&i.AccountID,
+		&i.UserID,
+		&i.AccountNumber,
+		&i.AccountType,
+		&i.Balance,
+		&i.DateOpened,
+	)
+	return i, err
 }
 
 const viewTransactions = `-- name: ViewTransactions :many

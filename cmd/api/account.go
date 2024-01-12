@@ -5,37 +5,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/markmumba/chasebank/internal/database"
-	"github.com/shopspring/decimal"
 )
-
-func ConvertStringToUuid(id string) uuid.UUID {
-	parsedId, err := uuid.Parse(id)
-	if err != nil {
-		log.Println(err.Error())
-	}
-	return parsedId
-}
-
-func ConvertStringToDecimal(amount string) decimal.Decimal {
-	decimalAmount, err := decimal.NewFromString(amount)
-	if err != nil {
-		log.Println(err.Error())
-		return decimal.Zero
-	}
-	return decimalAmount
-}
 
 func (app *Applicaton) CreateSavingAccount(c echo.Context) error {
 	var jsonResp Response
 
 	id := c.Param("id")
-	parsedId := ConvertStringToUuid(id)
+	parsedId := app.ConvertStringToUuid(id)
 
 	account, err := app.DB.CreateAccount(app.Ctx, database.CreateAccountParams{
 		UserID:      uuid.NullUUID{UUID: parsedId, Valid: true},
@@ -59,7 +40,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 
 	id := c.Param("id")
 	err := c.Bind(&accountStruct)
-	parsedId := ConvertStringToUuid(id)
+	parsedId := app.ConvertStringToUuid(id)
 
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
@@ -68,7 +49,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 
 	for _, acc := range userAccount {
 		if accountStruct.AccountType == acc.AccountType {
-			newTotal := ConvertStringToDecimal(acc.Balance).Add(ConvertStringToDecimal(accountStruct.Amount))
+			newTotal := app.ConvertStringToDecimal(acc.Balance).Add(app.ConvertStringToDecimal(accountStruct.Amount))
 			account, err := app.DB.Deposit(app.Ctx, database.DepositParams{
 				Balance:   newTotal.String(),
 				AccountID: acc.AccountID,
@@ -94,7 +75,7 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 
 	id := c.Param("id")
 	err := c.Bind(&accountStruct)
-	parsedId := ConvertStringToUuid(id)
+	parsedId := app.ConvertStringToUuid(id)
 
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
@@ -103,7 +84,7 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 
 	for _, acc := range userAccount {
 		if accountStruct.AccountType == acc.AccountType {
-			newTotal := ConvertStringToDecimal(acc.Balance).Sub(ConvertStringToDecimal(accountStruct.Amount))
+			newTotal := app.ConvertStringToDecimal(acc.Balance).Sub(app.ConvertStringToDecimal(accountStruct.Amount))
 			account, err := app.DB.Withdraw(app.Ctx, database.WithdrawParams{
 				Balance:   newTotal.String(),
 				AccountID: acc.AccountID,
@@ -130,7 +111,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 
 	id := c.Param("id")
 	err := c.Bind(&account)
-	parsedId := ConvertStringToUuid(id)
+	parsedId := app.ConvertStringToUuid(id)
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
 		app.ServerError(c, "Failed to retrieve user accounts")
@@ -175,7 +156,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
-	parsedId := ConvertStringToUuid(id)
+	parsedId := app.ConvertStringToUuid(id)
 
 	accounts, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
@@ -193,7 +174,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 	for _, account := range accounts {
 		err = qtx.DebitChecking(app.Ctx, database.DebitCheckingParams{
 			AccountID: account.AccountID,
-			Balance:   ConvertStringToDecimal(account.Balance).Sub(ConvertStringToDecimal(fundInstance.Amount)).String(),
+			Balance:   app.ConvertStringToDecimal(account.Balance).Sub(app.ConvertStringToDecimal(fundInstance.Amount)).String(),
 		})
 		if err != nil {
 			app.ServerError(c, err.Error())
@@ -201,7 +182,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 		}
 		err = qtx.CreditSaving(app.Ctx, database.CreditSavingParams{
 			AccountID: account.AccountID,
-			Balance:   ConvertStringToDecimal(account.Balance).Add(ConvertStringToDecimal(fundInstance.Amount)).String(),
+			Balance:   app.ConvertStringToDecimal(account.Balance).Add(app.ConvertStringToDecimal(fundInstance.Amount)).String(),
 		})
 		if err != nil {
 			app.ServerError(c, err.Error())
@@ -210,7 +191,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 		break
 	}
 
-		err = tx.Commit()
+	err = tx.Commit()
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
@@ -219,6 +200,51 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 
 }
 
-func (app *Applicaton) TransferFunds (c *echo.Context) error {
-	return nil 
+func (app *Applicaton) TransferFunds(c echo.Context) error {
+
+	type parameters struct {
+		AccountID     string `json:"account_id"`
+		AccountNumber string `json:"account_number"`
+		Amount        string `json:"amount"`
+	}
+
+	params := parameters{}
+	err := c.Bind(&params)
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+
+	accountSending, err := app.DB.FindAccountById(app.Ctx, app.ConvertStringToInt32(params.AccountID))
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+
+	accountReceiving, err := app.DB.FindAccountByAccNo(app.Ctx, params.AccountNumber)
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+	tx, err := app.SDB.Begin()
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+	defer tx.Rollback()
+
+	qtx := app.DB.WithTx(tx)
+
+	_, err = qtx.Withdraw(app.Ctx, database.WithdrawParams{
+		Balance:   app.ConvertStringToDecimal(accountSending.Balance).Sub(app.ConvertStringToDecimal(params.Amount)).String(),
+		AccountID: app.ConvertStringToInt32(params.AccountID),
+	})
+
+	_, err = qtx.Deposit(app.Ctx, database.DepositParams{
+		Balance:   app.ConvertStringToDecimal(accountReceiving.Balance).Add(app.ConvertStringToDecimal(params.Amount)).String(),
+		AccountID: accountReceiving.AccountID,
+	})
+
+	err = tx.Commit()
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"Success": "Transfer succesful"})
 }

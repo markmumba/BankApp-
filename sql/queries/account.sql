@@ -25,6 +25,24 @@ WHERE
   u.user_id = $1;
 
 
+-- name: FindAccountByAccNo :one
+SELECT
+  *
+FROM
+  accounts
+WHERE
+  account_number = $1;
+
+
+-- name: FindAccountById :one
+SELECT
+  *
+FROM
+  accounts
+WHERE
+  account_id = $1;
+
+
 -- name: Deposit :one
 UPDATE
   accounts
@@ -55,8 +73,6 @@ ORDER BY
   timestamp DESC;
 
 
-
-
 -- name: DebitChecking :exec
 UPDATE
   accounts
@@ -71,7 +87,7 @@ WHERE
 UPDATE
   accounts
 SET
-  balance =  $1
+  balance = $1
 WHERE
   account_id = $2
   AND account_type = 'savings';
