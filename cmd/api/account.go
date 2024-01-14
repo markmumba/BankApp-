@@ -1,7 +1,9 @@
 package main
 
-//TODO  refuse withdrawal when money exceeds balance
-
+//FIXME  refuse withdrawal when money exceeds balance
+//TODO view all accounts 
+// TODO return balance as json after the transaction 
+//FIXME understand where the empty curly braces are showing	
 import (
 	"database/sql"
 	"fmt"
@@ -13,7 +15,7 @@ import (
 )
 
 func (app *Applicaton) CreateSavingAccount(c echo.Context) error {
-	var jsonResp Response
+	var jsonResp string
 
 	id := c.Param("id")
 	parsedId := app.ConvertStringToUuid(id)
@@ -23,13 +25,11 @@ func (app *Applicaton) CreateSavingAccount(c echo.Context) error {
 		AccountType: Savings,
 	})
 	if err != nil {
-		app.ServerError(c, "Failed to create account ")
+		app.ServerError(c, err.Error())
 	}
 
-	fmt.Println(account)
-	jsonResp = Response{
-		Message: "Savings account has been successfully been created",
-	}
+	jsonResp = account.AccountNumber
+
 	return c.JSON(http.StatusOK, jsonResp)
 
 }
@@ -55,14 +55,22 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 				AccountID: acc.AccountID,
 			})
 			if err != nil {
-				app.ServerError(c, "Failed to make Deposit")
+				app.ServerError(c, err.Error())
 			}
-			app.SaveTransaction(acc.AccountID, 0, accountStruct.Amount, Deposit)
+			fmt.Println(acc.AccountID)
+			fmt.Println(accountStruct.Amount)
+			fmt.Println(Deposit)
+			err = app.SaveTransaction(c, acc.AccountID, accountStruct.Amount, Deposit)
+			if err != nil {
+				app.ServerError(c, err.Error())
+			}
 			jsonResp = Account{
 				AccountType: account.AccountType,
 				Amount:      account.Balance,
 			}
 		}
+
+		break
 	}
 
 	return c.JSON(http.StatusOK, jsonResp)
@@ -92,7 +100,10 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 			if err != nil {
 				app.ServerError(c, "Failed to complete withdrawal")
 			}
-			app.SaveTransaction(acc.AccountID, 0, accountStruct.Amount, Withdraw)
+			err = app.SaveTransaction(c, acc.AccountID, accountStruct.Amount, Withdraw)
+			if err != nil {
+				app.ServerError(c, err.Error())
+			}
 			jsonResp = Account{
 				AccountType: account.AccountType,
 				Amount:      account.Balance,
@@ -187,6 +198,10 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 		if err != nil {
 			app.ServerError(c, err.Error())
 		}
+		err = app.SaveTransactionFunds(c, account.AccountID, account.AccountID, fundInstance.Amount, TransferFunds)
+		if err != nil {
+			app.ServerError(c, err.Error())
+		}
 
 		break
 	}
@@ -202,27 +217,30 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 
 func (app *Applicaton) TransferFunds(c echo.Context) error {
 
+	var accountReceiving database.Account
+	var accountSending database.Account
+
 	type parameters struct {
-		AccountID     string `json:"account_id"`
+		AccountType   string `json:"account_type"`
 		AccountNumber string `json:"account_number"`
 		Amount        string `json:"amount"`
 	}
 
 	params := parameters{}
+
+	id := c.Param("id")
+	parsedId := app.ConvertStringToUuid(id)
 	err := c.Bind(&params)
+
+	accounts, err := app.DB.FindAccount(app.Ctx, parsedId)
+	if err != nil {
+		app.ServerError(c, "Could not find the users accounts")
+	}
+
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
 
-	accountSending, err := app.DB.FindAccountById(app.Ctx, app.ConvertStringToInt32(params.AccountID))
-	if err != nil {
-		app.ServerError(c, err.Error())
-	}
-
-	accountReceiving, err := app.DB.FindAccountByAccNo(app.Ctx, params.AccountNumber)
-	if err != nil {
-		app.ServerError(c, err.Error())
-	}
 	tx, err := app.SDB.Begin()
 	if err != nil {
 		app.ServerError(c, err.Error())
@@ -231,15 +249,36 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 
 	qtx := app.DB.WithTx(tx)
 
+	for _, account := range accounts {
+		if account.AccountType == params.AccountType {
+			accountSending, err = qtx.FindAccountById(app.Ctx, account.AccountID)
+			if err != nil {
+				app.ServerError(c, err.Error())
+			}
+		}
+		break
+	}
+
+	accountReceiving, err = qtx.FindAccountByAccNo(app.Ctx, params.AccountNumber)
+
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+
 	_, err = qtx.Withdraw(app.Ctx, database.WithdrawParams{
 		Balance:   app.ConvertStringToDecimal(accountSending.Balance).Sub(app.ConvertStringToDecimal(params.Amount)).String(),
-		AccountID: app.ConvertStringToInt32(params.AccountID),
+		AccountID: accountSending.AccountID,
 	})
 
 	_, err = qtx.Deposit(app.Ctx, database.DepositParams{
 		Balance:   app.ConvertStringToDecimal(accountReceiving.Balance).Add(app.ConvertStringToDecimal(params.Amount)).String(),
 		AccountID: accountReceiving.AccountID,
 	})
+
+	err = app.SaveTransactionFunds(c, accountSending.AccountID, accountReceiving.AccountID, params.Amount, TransferFunds)
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
 
 	err = tx.Commit()
 	if err != nil {

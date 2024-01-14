@@ -13,12 +13,13 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO
-  users (username, password_hash, email, full_name)
+  users (user_id, username, password_hash, email, full_name)
 VALUES
-  ($1, $2, $3, $4) RETURNING user_id, username, password_hash, email, full_name, date_joined
+  ($1, $2, $3, $4, $5) RETURNING user_id, username, password_hash, email, full_name, date_joined
 `
 
 type CreateUserParams struct {
+	UserID       uuid.UUID
 	Username     string
 	PasswordHash string
 	Email        string
@@ -27,6 +28,7 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
+		arg.UserID,
 		arg.Username,
 		arg.PasswordHash,
 		arg.Email,
@@ -65,6 +67,43 @@ func (q *Queries) FindUser(ctx context.Context, userID uuid.UUID) (User, error) 
 		&i.DateJoined,
 	)
 	return i, err
+}
+
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT
+  user_id, username, password_hash, email, full_name, date_joined
+FROM
+  users
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.PasswordHash,
+			&i.Email,
+			&i.FullName,
+			&i.DateJoined,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listAllUser = `-- name: ListAllUser :many

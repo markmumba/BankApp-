@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -22,13 +23,19 @@ func main() {
 
 	e.Use(middleware.CORS())
 
+	conn, err := sql.Open("postgres", config.Config("DATABASE_URL"))
+	if err != nil {
+		log.Println(err.Error())
+	}
+	appContex := context.Background()
+
 	Applicaton := &Applicaton{
-		SDB: config.Conn,
-		DB:  database.New(config.Conn),
-		Ctx: e.NewContext(nil, nil).Request().Context(),
+		SDB: conn,
+		DB:  database.New(conn),
+		Ctx: appContex,
 	}
 
-	defer config.Conn.Close()
+	defer conn.Close()
 
 	Applicaton.SetupRouter(e)
 	e.Logger.Fatal(e.Start(":" + config.Config("PORT")))

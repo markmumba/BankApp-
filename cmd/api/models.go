@@ -10,9 +10,7 @@ const (
 	TransferFunds = "transfer_funds"
 )
 
-type Response struct {
-	Message string `json:"message"`
-}
+
 type User struct {
 	UserName string `json:"user_name"`
 	Email    string `json:"email"`

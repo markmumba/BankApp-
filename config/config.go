@@ -1,7 +1,6 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 
@@ -17,4 +16,3 @@ func Config(key string) string {
 	return os.Getenv(key)
 }
 
-var Conn, err = sql.Open("postgres",Config("DATABASE_URL"))

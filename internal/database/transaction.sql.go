@@ -12,20 +12,38 @@ import (
 
 const saveTransaction = `-- name: SaveTransaction :exec
 INSERT INTO
-  transactions (account_id, recepient_id,amount, type)
+  transactions (account_id, amount, type)
 VALUES
-  ($1, $2, $3 ,$4) RETURNING transaction_id, account_id, recepient_id, amount, type, timestamp
+  ($1, $2, $3)
 `
 
 type SaveTransactionParams struct {
+	AccountID sql.NullInt32
+	Amount    string
+	Type      string
+}
+
+func (q *Queries) SaveTransaction(ctx context.Context, arg SaveTransactionParams) error {
+	_, err := q.db.ExecContext(ctx, saveTransaction, arg.AccountID, arg.Amount, arg.Type)
+	return err
+}
+
+const saveTransactionFunds = `-- name: SaveTransactionFunds :exec
+INSERT INTO
+  transactions (account_id, recepient_id, amount, type)
+VALUES
+  ($1, $2, $3, $4)
+`
+
+type SaveTransactionFundsParams struct {
 	AccountID   sql.NullInt32
 	RecepientID sql.NullInt32
 	Amount      string
 	Type        string
 }
 
-func (q *Queries) SaveTransaction(ctx context.Context, arg SaveTransactionParams) error {
-	_, err := q.db.ExecContext(ctx, saveTransaction,
+func (q *Queries) SaveTransactionFunds(ctx context.Context, arg SaveTransactionFundsParams) error {
+	_, err := q.db.ExecContext(ctx, saveTransactionFunds,
 		arg.AccountID,
 		arg.RecepientID,
 		arg.Amount,

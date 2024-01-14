@@ -1,8 +1,15 @@
 -- name: CreateUser :one
 INSERT INTO
-  users (username, password_hash, email, full_name)
+  users (user_id, username, password_hash, email, full_name)
 VALUES
-  ($1, $2, $3, $4) RETURNING *;
+  ($1, $2, $3, $4, $5) RETURNING *;
+
+
+-- name: GetAllUsers :many
+SELECT
+  *
+FROM
+  users;
 
 
 -- name: FindUser :one 

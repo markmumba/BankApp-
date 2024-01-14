@@ -1,5 +1,9 @@
 package main
 
+
+//TODO get user accounts 
+//TODO 
+
 import (
 	"fmt"
 	"net/http"
@@ -25,7 +29,7 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 	var user User
 	err := c.Bind(&user)
 	if err != nil {
-		app.ServerError(c,"Failed to bind to user struct")
+		app.ServerError(c, "Failed to bind to user struct")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
@@ -33,23 +37,24 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 		fmt.Println(err.Error())
 	}
 
-	result, err := app.DB.CreateUser(app.Ctx, database.CreateUserParams{
+	result, err := app.DB.CreateUser(c.Request().Context(), database.CreateUserParams{
+		UserID:       uuid.New(),
 		Username:     user.UserName,
 		Email:        user.Email,
 		FullName:     user.FullName,
 		PasswordHash: string(hashedPassword),
 	})
 	if err != nil {
-		app.ServerError(c,"Failed to create user")
+		app.ServerError(c, err.Error())
 	}
 
-	account, err := app.DB.CreateAccount(app.Ctx, database.CreateAccountParams{
+	account, err := app.DB.CreateAccount(c.Request().Context(), database.CreateAccountParams{
 		UserID:      uuid.NullUUID{UUID: result.UserID, Valid: true},
 		AccountType: Checking,
 	})
 
 	if err != nil {
-		app.ServerError(c,"Failed to create account for user")
+		app.ServerError(c, err.Error())
 	}
 
 	balance, err := decimal.NewFromString(account.Balance)
@@ -68,4 +73,21 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, newUserDetails)
 
+}
+
+
+
+func (app *Applicaton) GetAllUsers(c echo.Context) error {
+
+	userList := []database.User{}
+
+	users, err := app.DB.GetAllUsers(app.Ctx)
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
+	for _, user := range users {
+		userList = append(userList, user)
+	}
+
+	return c.JSON(http.StatusOK, userList)
 }
