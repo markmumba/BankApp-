@@ -8,10 +8,12 @@ func (app *Applicaton) SetupRouter(e *echo.Echo) {
 	api.GET("/user", app.GetAllUsers)
 	api.POST("/user", app.CreateUser)
 
-	api.POST("/account/:id", app.CreateSavingAccount)
-	api.POST("/account/deposit/:id", app.Deposit)
-	api.POST("/account/withdraw/:id", app.Withdraw)
-	api.GET("/account/transactions/:id", app.ViewTransactions)
-	api.POST("/account/checktosave/:id", app.TransferCheckingToSaving)
-	api.POST("/account/transferfunds/:id", app.TransferFunds)
+	account := api.Group("/account")
+
+	account.POST("/:id", app.CreateSavingAccount)
+	account.POST("/deposit/:id", app.Deposit)
+	account.POST("/withdraw/:id", app.Withdraw)
+	account.GET("/transactions/:id", app.ViewTransactions)
+	account.POST("/checktosave/:id", app.TransferCheckingToSaving)
+	account.POST("/transferfunds/:id", app.TransferFunds)
 }

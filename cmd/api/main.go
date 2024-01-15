@@ -20,7 +20,9 @@ type Applicaton struct {
 
 func main() {
 	e := echo.New()
-
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "method=${method}, uri=${uri}, status=${status}\n",
+	}))
 	e.Use(middleware.CORS())
 
 	conn, err := sql.Open("postgres", config.Config("DATABASE_URL"))

@@ -1,12 +1,10 @@
 package main
 
-//TODO get all transactions 
-
+//TODO get all transactions
 
 import (
 	"database/sql"
 	"fmt"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/markmumba/chasebank/internal/database"
@@ -24,7 +22,7 @@ func (app *Applicaton) SaveTransaction(c echo.Context, accoutId int32, amount st
 		fmt.Println(err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{})
+	return nil
 
 }
 
@@ -41,6 +39,5 @@ func (app *Applicaton) SaveTransactionFunds(c echo.Context, accoutId int32, reci
 		fmt.Println(err.Error())
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{})
-
+	return nil
 }
