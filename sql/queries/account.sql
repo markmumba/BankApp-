@@ -98,3 +98,12 @@ DELETE FROM
   accounts
 WHERE
   account_id = $1;
+
+
+-- name: GetAllAccounts :many 
+SELECT
+  *
+FROM
+  accounts
+ORDER BY
+  user_id;

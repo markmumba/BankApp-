@@ -223,6 +223,45 @@ func (q *Queries) FindAccountById(ctx context.Context, accountID int32) (Account
 	return i, err
 }
 
+const getAllAccounts = `-- name: GetAllAccounts :many
+SELECT
+  account_id, user_id, account_number, account_type, balance, date_opened
+FROM
+  accounts
+ORDER BY
+  user_id
+`
+
+func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAllAccounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.UserID,
+			&i.AccountNumber,
+			&i.AccountType,
+			&i.Balance,
+			&i.DateOpened,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const viewTransactions = `-- name: ViewTransactions :many
 SELECT
   transaction_id, account_id, recepient_id, amount, type, timestamp

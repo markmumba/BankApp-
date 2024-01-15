@@ -7,6 +7,7 @@ func (app *Applicaton) SetupRouter(e *echo.Echo) {
 	api := e.Group("/api")
 	api.GET("/user", app.GetAllUsers)
 	api.POST("/user", app.CreateUser)
+	api.GET("/user/:id", app.GetUser)
 
 	account := api.Group("/account")
 

@@ -69,6 +69,28 @@ func (q *Queries) FindUser(ctx context.Context, userID uuid.UUID) (User, error) 
 	return i, err
 }
 
+const findUserByEmail = `-- name: FindUserByEmail :one
+SELECT
+  user_id,
+  password_hash
+FROM
+  users
+WHERE
+  email = $1
+`
+
+type FindUserByEmailRow struct {
+	UserID       uuid.UUID
+	PasswordHash string
+}
+
+func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error) {
+	row := q.db.QueryRowContext(ctx, findUserByEmail, email)
+	var i FindUserByEmailRow
+	err := row.Scan(&i.UserID, &i.PasswordHash)
+	return i, err
+}
+
 const getAllUsers = `-- name: GetAllUsers :many
 SELECT
   user_id, username, password_hash, email, full_name, date_joined
@@ -78,43 +100,6 @@ FROM
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 	rows, err := q.db.QueryContext(ctx, getAllUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.UserID,
-			&i.Username,
-			&i.PasswordHash,
-			&i.Email,
-			&i.FullName,
-			&i.DateJoined,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listAllUser = `-- name: ListAllUser :many
-SELECT
-  user_id, username, password_hash, email, full_name, date_joined
-FROM
-  users
-`
-
-func (q *Queries) ListAllUser(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listAllUser)
 	if err != nil {
 		return nil, err
 	}
