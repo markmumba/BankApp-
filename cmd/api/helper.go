@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/markmumba/chasebank/internal/database"
 	"github.com/shopspring/decimal"
 )
 
@@ -52,6 +53,16 @@ func (app *Applicaton) CheckBalance(balance string, amount string) bool {
 func (app *Applicaton) DepositHelper(balance string, amount string) decimal.Decimal {
 	return app.ConvertStringToDecimal(balance).Add(app.ConvertStringToDecimal(amount))
 }
-func (app *Applicaton) WithdrawHelper(balance string, amount string ) decimal.Decimal {
+func (app *Applicaton) WithdrawHelper(balance string, amount string) decimal.Decimal {
 	return app.ConvertStringToDecimal(balance).Sub(app.ConvertStringToDecimal(amount))
+}
+
+func (app *Applicaton) FindAccountHelper(c echo.Context,  parseId uuid.UUID) []database.FindAccountRow {
+
+	userAccounts, err := app.DB.FindAccount(app.Ctx,parseId)
+	if err != nil {
+		app.ServerError(c, "Failed to retrieve user accounts")
+
+	}
+	return userAccounts
 }

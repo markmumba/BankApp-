@@ -3,10 +3,9 @@ package main
 //FIXME  refuse withdrawal when money exceeds balance
 //TODO view all accounts
 // TODO return balance as json after the transaction
-//FIXME understand where the empty curly braces are showing
-//TODO error handling make it better
+
 import (
-	"database/sql"
+	
 	"net/http"
 
 	"github.com/google/uuid"
@@ -40,14 +39,14 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 
 	id := c.Param("id")
 	err := c.Bind(&accountStruct)
+	if err != nil {
+		app.ServerError(c, "Failed to get account details")
+	}
 	parsedId := app.ConvertStringToUuid(id)
 
-	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
-	if err != nil {
-		app.ServerError(c, "Failed to retrieve all accounts")
-	}
+	userAccounts := app.FindAccountHelper(c, parsedId)
 
-	for _, acc := range userAccount {
+	for _, acc := range userAccounts {
 		if accountStruct.AccountType == acc.AccountType {
 			account, err := app.DB.Deposit(app.Ctx, database.DepositParams{
 				Balance:   app.DepositHelper(acc.Balance, accountStruct.Amount).String(),
@@ -79,14 +78,13 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 
 	id := c.Param("id")
 	err := c.Bind(&accountStruct)
-	parsedId := app.ConvertStringToUuid(id)
-
-	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
-		app.ServerError(c, "Failed to retrieve user accounts ")
+		app.ServerError(c, "failed to get account details")
 	}
+	parsedId := app.ConvertStringToUuid(id)
+	userAccounts := app.FindAccountHelper(c, parsedId)
 
-	for _, acc := range userAccount {
+	for _, acc := range userAccounts {
 		if accountStruct.AccountType == acc.AccountType {
 			if app.CheckBalance(acc.Balance, accountStruct.Amount) {
 				account, err := app.DB.Withdraw(app.Ctx, database.WithdrawParams{
@@ -114,51 +112,6 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 
 }
 
-func (app *Applicaton) ViewTransactions(c echo.Context) error {
-
-	var accountType AccountType
-	var transactions []database.Transaction
-	var jsonResp []Transaction
-
-	id := c.Param("id")
-	err := c.Bind(&accountType)
-	parsedId := app.ConvertStringToUuid(id)
-	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
-	if err != nil {
-		app.ServerError(c, "Failed to retrieve user accounts")
-
-	}
-
-	found := false
-	for _, acc := range userAccount {
-		if accountType.Type == acc.AccountType {
-			transactions, err = app.DB.ViewTransactions(app.Ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
-			if err != nil {
-				app.ServerError(c, "Failed to retrieve the transactions ")
-			}
-			found = true
-			break
-		}
-	}
-	if !found {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Account not found"})
-	}
-
-	for _, transaction := range transactions {
-		account, err := app.DB.FindAccountById(app.Ctx, transaction.RecepientID.Int32)
-		if err != nil {
-			app.ServerError(c, "unable to find recipeint account")
-		}
-		newTransaction := Transaction{
-			RecepientAccount: account.AccountNumber,
-			Amount:           transaction.Amount,
-			Type:             transaction.Type,
-			Timestamp:        transaction.Timestamp.Time,
-		}
-		jsonResp = append(jsonResp, newTransaction)
-	}
-	return c.JSON(http.StatusOK, jsonResp)
-}
 
 func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 	type Funds struct {
@@ -172,11 +125,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 		app.ServerError(c, err.Error())
 	}
 	parsedId := app.ConvertStringToUuid(id)
-
-	accounts, err := app.DB.FindAccount(app.Ctx, parsedId)
-	if err != nil {
-		app.ServerError(c, "Could not find the users accounts")
-	}
+	userAccounts := app.FindAccountHelper(c, parsedId)
 
 	tx, err := app.SDB.Begin()
 	if err != nil {
@@ -186,7 +135,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 
 	qtx := app.DB.WithTx(tx)
 
-	for _, account := range accounts {
+	for _, account := range userAccounts {
 		err = qtx.DebitChecking(app.Ctx, database.DebitCheckingParams{
 			AccountID: account.AccountID,
 			Balance:   app.ConvertStringToDecimal(account.Balance).Sub(app.ConvertStringToDecimal(fundInstance.Amount)).String(),
@@ -236,10 +185,7 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 	parsedId := app.ConvertStringToUuid(id)
 	err := c.Bind(&params)
 
-	accounts, err := app.DB.FindAccount(app.Ctx, parsedId)
-	if err != nil {
-		app.ServerError(c, "Could not find the users accounts")
-	}
+	userAccounts := app.FindAccountHelper(c, parsedId)
 
 	if err != nil {
 		app.ServerError(c, err.Error())
@@ -253,7 +199,7 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 
 	qtx := app.DB.WithTx(tx)
 
-	for _, account := range accounts {
+	for _, account := range userAccounts {
 		if account.AccountType == params.AccountType {
 			accountSending, err = qtx.FindAccountById(app.Ctx, account.AccountID)
 			if err != nil {
