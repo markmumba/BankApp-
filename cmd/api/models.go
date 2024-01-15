@@ -10,6 +10,10 @@ const (
 	TransferFunds = "transfer_funds"
 )
 
+type AccountType struct {
+	Type string `json:"account_type"`
+}
+
 
 type User struct {
 	UserName string `json:"user_name"`
@@ -24,7 +28,7 @@ type Account struct {
 }
 
 type Transaction struct {
-	RecepientID int32     `json:"recepient_id"`
+	RecepientAccount string    `json:"recepient_account"`
 	Amount      string    `json:"amount"`
 	Type        string    `json:"type"`
 	Timestamp   time.Time `json:"timestamp"`

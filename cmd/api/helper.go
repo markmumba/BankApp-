@@ -38,3 +38,20 @@ func (app *Applicaton) ConvertStringToInt32(stringInt string) int32 {
 	}
 	return int32(integer)
 }
+
+func (app *Applicaton) CheckBalance(balance string, amount string) bool {
+
+	if app.ConvertStringToDecimal(balance).GreaterThan(app.ConvertStringToDecimal(amount)) {
+		return true
+	} else {
+		return false
+	}
+
+}
+
+func (app *Applicaton) DepositHelper(balance string, amount string) decimal.Decimal {
+	return app.ConvertStringToDecimal(balance).Add(app.ConvertStringToDecimal(amount))
+}
+func (app *Applicaton) WithdrawHelper(balance string, amount string ) decimal.Decimal {
+	return app.ConvertStringToDecimal(balance).Sub(app.ConvertStringToDecimal(amount))
+}

@@ -1,8 +1,7 @@
 package main
 
-
-//TODO get user accounts 
-//TODO 
+//TODO get user accounts
+//TODO
 
 import (
 	"fmt"
@@ -75,8 +74,6 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 
 }
 
-
-
 func (app *Applicaton) GetAllUsers(c echo.Context) error {
 
 	userList := []database.User{}
@@ -90,4 +87,41 @@ func (app *Applicaton) GetAllUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, userList)
+}
+func (app *Applicaton) GetUser(c echo.Context) error {
+	id := c.Param("id")
+	parseId := app.ConvertStringToUuid(id)
+
+	user, err := app.DB.FindUser(app.Ctx, parseId)
+	if err != nil {
+		app.ServerError(c, "Failed to locate user")
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"username": user.Username, "email": user.Email})
+}
+
+func (app *Applicaton) Login(c echo.Context) error {
+	type UserLogin struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var user UserLogin
+	err := c.Bind(&user)
+	if err != nil {
+		app.ServerError(c, "unable to get details")
+	}
+	userDetalis, err := app.DB.FindUserByEmail(app.Ctx, user.Email)
+	if err != nil {
+		app.ServerError(c, "Failed to retrive user details")
+
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(userDetalis.PasswordHash), []byte(user.Password))
+	if err != nil {
+		app.ServerError(c, "password does not match ")
+	}
+	redirectURL := fmt.Sprintf("/api/user/%s", userDetalis.UserID.String())
+	return c.Redirect(http.StatusSeeOther, redirectURL)
+
 }

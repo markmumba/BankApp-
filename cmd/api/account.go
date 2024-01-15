@@ -1,12 +1,12 @@
 package main
 
 //FIXME  refuse withdrawal when money exceeds balance
-//TODO view all accounts 
-// TODO return balance as json after the transaction 
-//FIXME understand where the empty curly braces are showing	
+//TODO view all accounts
+// TODO return balance as json after the transaction
+//FIXME understand where the empty curly braces are showing
+//TODO error handling make it better
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -49,17 +49,13 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 
 	for _, acc := range userAccount {
 		if accountStruct.AccountType == acc.AccountType {
-			newTotal := app.ConvertStringToDecimal(acc.Balance).Add(app.ConvertStringToDecimal(accountStruct.Amount))
 			account, err := app.DB.Deposit(app.Ctx, database.DepositParams{
-				Balance:   newTotal.String(),
+				Balance:   app.DepositHelper(acc.Balance, accountStruct.Amount).String(),
 				AccountID: acc.AccountID,
 			})
 			if err != nil {
 				app.ServerError(c, err.Error())
 			}
-			fmt.Println(acc.AccountID)
-			fmt.Println(accountStruct.Amount)
-			fmt.Println(Deposit)
 			err = app.SaveTransaction(c, acc.AccountID, accountStruct.Amount, Deposit)
 			if err != nil {
 				app.ServerError(c, err.Error())
@@ -92,21 +88,24 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 
 	for _, acc := range userAccount {
 		if accountStruct.AccountType == acc.AccountType {
-			newTotal := app.ConvertStringToDecimal(acc.Balance).Sub(app.ConvertStringToDecimal(accountStruct.Amount))
-			account, err := app.DB.Withdraw(app.Ctx, database.WithdrawParams{
-				Balance:   newTotal.String(),
-				AccountID: acc.AccountID,
-			})
-			if err != nil {
-				app.ServerError(c, "Failed to complete withdrawal")
-			}
-			err = app.SaveTransaction(c, acc.AccountID, accountStruct.Amount, Withdraw)
-			if err != nil {
-				app.ServerError(c, err.Error())
-			}
-			jsonResp = Account{
-				AccountType: account.AccountType,
-				Amount:      account.Balance,
+			if app.CheckBalance(acc.Balance, accountStruct.Amount) {
+				account, err := app.DB.Withdraw(app.Ctx, database.WithdrawParams{
+					Balance:   app.WithdrawHelper(acc.Balance, accountStruct.Amount).String(),
+					AccountID: acc.AccountID,
+				})
+				if err != nil {
+					app.ServerError(c, "Failed to complete withdrawal")
+				}
+				err = app.SaveTransaction(c, acc.AccountID, accountStruct.Amount, Withdraw)
+				if err != nil {
+					app.ServerError(c, err.Error())
+				}
+				jsonResp = Account{
+					AccountType: account.AccountType,
+					Amount:      account.Balance,
+				}
+			} else {
+				return c.JSON(http.StatusOK, map[string]string{"invalid": "Balance is not enough to make transaction"})
 			}
 		}
 	}
@@ -116,12 +115,13 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 }
 
 func (app *Applicaton) ViewTransactions(c echo.Context) error {
-	var account Account
+
+	var accountType AccountType
 	var transactions []database.Transaction
 	var jsonResp []Transaction
 
 	id := c.Param("id")
-	err := c.Bind(&account)
+	err := c.Bind(&accountType)
 	parsedId := app.ConvertStringToUuid(id)
 	userAccount, err := app.DB.FindAccount(app.Ctx, parsedId)
 	if err != nil {
@@ -131,7 +131,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 
 	found := false
 	for _, acc := range userAccount {
-		if account.AccountType == acc.AccountType {
+		if accountType.Type == acc.AccountType {
 			transactions, err = app.DB.ViewTransactions(app.Ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
 			if err != nil {
 				app.ServerError(c, "Failed to retrieve the transactions ")
@@ -145,11 +145,15 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	}
 
 	for _, transaction := range transactions {
+		account, err := app.DB.FindAccountById(app.Ctx, transaction.RecepientID.Int32)
+		if err != nil {
+			app.ServerError(c, "unable to find recipeint account")
+		}
 		newTransaction := Transaction{
-			RecepientID: transaction.RecepientID.Int32,
-			Amount:      transaction.Amount,
-			Type:        transaction.Type,
-			Timestamp:   transaction.Timestamp.Time,
+			RecepientAccount: account.AccountNumber,
+			Amount:           transaction.Amount,
+			Type:             transaction.Type,
+			Timestamp:        transaction.Timestamp.Time,
 		}
 		jsonResp = append(jsonResp, newTransaction)
 	}
@@ -264,20 +268,24 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
+	if app.CheckBalance(accountSending.Balance, params.Amount) {
 
-	_, err = qtx.Withdraw(app.Ctx, database.WithdrawParams{
-		Balance:   app.ConvertStringToDecimal(accountSending.Balance).Sub(app.ConvertStringToDecimal(params.Amount)).String(),
-		AccountID: accountSending.AccountID,
-	})
+		_, err = qtx.Withdraw(app.Ctx, database.WithdrawParams{
+			Balance:   app.WithdrawHelper(accountSending.Balance, params.Amount).String(),
+			AccountID: accountSending.AccountID,
+		})
 
-	_, err = qtx.Deposit(app.Ctx, database.DepositParams{
-		Balance:   app.ConvertStringToDecimal(accountReceiving.Balance).Add(app.ConvertStringToDecimal(params.Amount)).String(),
-		AccountID: accountReceiving.AccountID,
-	})
+		_, err = qtx.Deposit(app.Ctx, database.DepositParams{
+			Balance:   app.DepositHelper(accountReceiving.Balance, params.Amount).String(),
+			AccountID: accountReceiving.AccountID,
+		})
 
-	err = app.SaveTransactionFunds(c, accountSending.AccountID, accountReceiving.AccountID, params.Amount, TransferFunds)
-	if err != nil {
-		app.ServerError(c, err.Error())
+		err = app.SaveTransactionFunds(c, accountSending.AccountID, accountReceiving.AccountID, params.Amount, TransferFunds)
+		if err != nil {
+			app.ServerError(c, err.Error())
+		}
+	} else {
+		app.ServerError(c, "No enough Funds to transfer")
 	}
 
 	err = tx.Commit()

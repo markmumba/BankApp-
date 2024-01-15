@@ -21,6 +21,16 @@ WHERE
   user_id = $1;
 
 
+-- name: FindUserByEmail :one 
+SELECT
+  user_id,
+  password_hash
+FROM
+  users
+WHERE
+  email = $1;
+
+
 -- name: UpdateUser :one 
 UPDATE
   users
@@ -31,10 +41,3 @@ SET
   full_name = $4
 WHERE
   user_id = $5 RETURNING *;
-
-
--- name: ListAllUser :many
-SELECT
-  *
-FROM
-  users;
