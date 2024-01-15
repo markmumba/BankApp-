@@ -10,7 +10,7 @@ func (app *Applicaton) SetupRouter(e *echo.Echo) {
 	api.GET("/user/:id", app.GetUser)
 
 	account := api.Group("/account")
-
+	account.GET("/:id", app.GetUserAccounts)
 	account.POST("/:id", app.CreateSavingAccount)
 	account.POST("/deposit/:id", app.Deposit)
 	account.POST("/withdraw/:id", app.Withdraw)
