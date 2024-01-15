@@ -89,6 +89,8 @@ func (app *Applicaton) GetAllUsers(c echo.Context) error {
 	return c.JSON(http.StatusOK, userList)
 }
 func (app *Applicaton) GetUser(c echo.Context) error {
+
+	accountDetails := map[string]string{}
 	id := c.Param("id")
 	parseId := app.ConvertStringToUuid(id)
 
@@ -96,8 +98,18 @@ func (app *Applicaton) GetUser(c echo.Context) error {
 	if err != nil {
 		app.ServerError(c, "Failed to locate user")
 	}
+	accounts, err := app.DB.FindAccount(app.Ctx, parseId)
+	if err != nil {
+		app.ServerError(c, "could not find accounts ")
+	}
+	for _, account := range accounts {
+		accountDetails[account.AccountNumber] = account.AccountType
+	}
 
-	return c.JSON(http.StatusOK, map[string]string{"username": user.Username, "email": user.Email})
+	return c.JSON(http.StatusOK, map[string]map[string]string{
+		"user":    {"username": user.Username, "email": user.Email},
+		"account": accountDetails,
+	})
 }
 
 func (app *Applicaton) Login(c echo.Context) error {

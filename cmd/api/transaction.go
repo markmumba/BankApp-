@@ -43,7 +43,6 @@ func (app *Applicaton) SaveTransactionFunds(c echo.Context, accoutId int32, reci
 	return nil
 }
 
-
 func (app *Applicaton) ViewTransactions(c echo.Context) error {
 
 	var accountType AccountType

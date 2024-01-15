@@ -73,24 +73,14 @@ ORDER BY
   timestamp DESC;
 
 
--- name: DebitChecking :exec
+-- name: CheckToSave :exec
 UPDATE
   accounts
 SET
   balance = $1
 WHERE
   account_id = $2
-  AND account_type = 'checking';
-
-
--- name: CreditSaving :exec
-UPDATE
-  accounts
-SET
-  balance = $1
-WHERE
-  account_id = $2
-  AND account_type = 'savings';
+  AND account_type = $3;
 
 
 -- name: CloseAccount :exec
