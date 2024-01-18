@@ -1,7 +1,5 @@
 package main
 
-//TODO get user accounts
-//TODO
 
 import (
 	"fmt"

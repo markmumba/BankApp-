@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	_"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/markmumba/chasebank/internal/database"

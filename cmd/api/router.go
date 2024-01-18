@@ -1,20 +1,23 @@
 package main
 
-import "github.com/labstack/echo/v4"
+import (
+
+	"github.com/labstack/echo/v4"
+)
 
 func (app *Applicaton) SetupRouter(e *echo.Echo) {
+	
+	public := e.Group("/api")
+	public.POST("/user/create",app.CreateUser)
+	public.POST("/login", app.Login)
 
 	api := e.Group("/api")
 	api.Use(Authentication)
 
 	api.GET("/users", app.GetAllUsers)
 	api.GET("/user/:id", app.GetUser)
-
-	api.POST("/user/create", app.CreateUser)
-	api.POST("/login", app.Login)
-
+	
 	account := api.Group("/account")
-
 	account.GET("/:id", app.GetUserAccounts)
 	account.GET("/transactions/:id", app.ViewTransactions)
 

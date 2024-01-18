@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	//"net/http"
+	"net/http"
 
-	//"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
@@ -26,8 +25,10 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "method=${method}, uri=${uri}, status=${status}\n",
 	}))
-	e.Use(middleware.CORS())
-
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:5173/"},
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+	}))
 
 	conn, err := sql.Open("postgres", config.Config("DATABASE_URL"))
 	if err != nil {
