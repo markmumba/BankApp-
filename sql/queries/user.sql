@@ -23,8 +23,7 @@ WHERE
 
 -- name: FindUserByEmail :one 
 SELECT
-  user_id,
-  password_hash
+*
 FROM
   users
 WHERE

@@ -6,13 +6,21 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/markmumba/chasebank/config"
 	"github.com/markmumba/chasebank/internal/database"
 	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type CustomClaims struct {
+	ID string `json:"id"`
+	jwt.RegisteredClaims
+}
 
 type newuserDetails struct {
 	UserName      string          `json:"user_name"`
@@ -89,8 +97,8 @@ func (app *Applicaton) GetAllUsers(c echo.Context) error {
 	return c.JSON(http.StatusOK, userList)
 }
 func (app *Applicaton) GetUser(c echo.Context) error {
-
 	accountDetails := map[string]string{}
+
 	id := c.Param("id")
 	parseId := app.ConvertStringToUuid(id)
 
@@ -113,12 +121,8 @@ func (app *Applicaton) GetUser(c echo.Context) error {
 }
 
 func (app *Applicaton) Login(c echo.Context) error {
-	type UserLogin struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
 
-	var user UserLogin
+	var user User
 	err := c.Bind(&user)
 	if err != nil {
 		app.ServerError(c, "unable to get details")
@@ -133,7 +137,31 @@ func (app *Applicaton) Login(c echo.Context) error {
 	if err != nil {
 		app.ServerError(c, "password does not match ")
 	}
-	redirectURL := fmt.Sprintf("/api/user/%s", userDetalis.UserID.String())
-	return c.Redirect(http.StatusSeeOther, redirectURL)
+
+	claims := &CustomClaims{
+		userDetalis.UserID.String(),
+		jwt.RegisteredClaims{
+			Issuer:    userDetalis.UserID.String(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(config.Config("SECRET_KEY")))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	c.SetCookie(&http.Cookie{
+		Name:     "token",
+		Value:    t,
+		Expires:  time.Now().Add(time.Hour * 72),
+		HttpOnly: true,
+	})
+
+	user.UserName = userDetalis.UserID.String()
+	user.Token = t
+	user.Password = ""
+	return c.JSON(http.StatusOK, user)
 
 }

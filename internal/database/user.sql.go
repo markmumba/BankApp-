@@ -71,23 +71,24 @@ func (q *Queries) FindUser(ctx context.Context, userID uuid.UUID) (User, error) 
 
 const findUserByEmail = `-- name: FindUserByEmail :one
 SELECT
-  user_id,
-  password_hash
+user_id, username, password_hash, email, full_name, date_joined
 FROM
   users
 WHERE
   email = $1
 `
 
-type FindUserByEmailRow struct {
-	UserID       uuid.UUID
-	PasswordHash string
-}
-
-func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error) {
+func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, findUserByEmail, email)
-	var i FindUserByEmailRow
-	err := row.Scan(&i.UserID, &i.PasswordHash)
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.Email,
+		&i.FullName,
+		&i.DateJoined,
+	)
 	return i, err
 }
 

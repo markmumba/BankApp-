@@ -193,15 +193,11 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 	id := c.Param("id")
 	parsedId := app.ConvertStringToUuid(id)
 	err := c.Bind(&params)
-
-	accounts, err := app.DB.FindAccount(app.Ctx, parsedId)
-	if err != nil {
-		app.ServerError(c, "Could not find the users accounts")
-	}
-
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
+
+	userAccounts := app.FindAccountHelper(c, parsedId)
 
 	tx, err := app.SDB.Begin()
 	if err != nil {
@@ -211,7 +207,7 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 
 	qtx := app.DB.WithTx(tx)
 
-	for _, account := range accounts {
+	for _, account := range userAccounts {
 		if account.AccountType == params.AccountType {
 			accountSending, err = qtx.FindAccountById(app.Ctx, account.AccountID)
 			if err != nil {

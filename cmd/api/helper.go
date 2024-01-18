@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	_"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/markmumba/chasebank/internal/database"
@@ -57,12 +58,13 @@ func (app *Applicaton) WithdrawHelper(balance string, amount string) decimal.Dec
 	return app.ConvertStringToDecimal(balance).Sub(app.ConvertStringToDecimal(amount))
 }
 
-func (app *Applicaton) FindAccountHelper(c echo.Context,  parseId uuid.UUID) []database.FindAccountRow {
+func (app *Applicaton) FindAccountHelper(c echo.Context, parseId uuid.UUID) []database.FindAccountRow {
 
-	userAccounts, err := app.DB.FindAccount(app.Ctx,parseId)
+	userAccounts, err := app.DB.FindAccount(app.Ctx, parseId)
 	if err != nil {
 		app.ServerError(c, "Failed to retrieve user accounts")
 
 	}
 	return userAccounts
 }
+
