@@ -1,4 +1,4 @@
-package main
+package handlers 
 
 
 import (
@@ -15,10 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type CustomClaims struct {
-	ID string `json:"id"`
-	jwt.RegisteredClaims
-}
+
 
 type newuserDetails struct {
 	UserName      string          `json:"user_name"`

@@ -1,6 +1,10 @@
-package main
+package handlers
 
-import "time"
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 const (
 	Checking      = "checking"
@@ -9,6 +13,11 @@ const (
 	Withdraw      = "withdraw"
 	TransferFunds = "transfer_funds"
 )
+
+type CustomClaims struct {
+	ID string `json:"id"`
+	jwt.RegisteredClaims
+}
 
 type AccountType struct {
 	Type string `json:"account_type"`

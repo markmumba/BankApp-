@@ -1,4 +1,4 @@
-package main
+package handlers 
 
 //FIXME  refuse withdrawal when money exceeds balance
 //TODO view all accounts

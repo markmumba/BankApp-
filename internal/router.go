@@ -1,22 +1,24 @@
-package main
+package internal
 
 import (
-
 	"github.com/labstack/echo/v4"
+
+	"github.com/markmumba/chasebank/internal/handlers"
+	"github.com/markmumba/chasebank/internal/middleware"
 )
 
-func (app *Applicaton) SetupRouter(e *echo.Echo) {
-	
+func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
+
 	public := e.Group("/api")
-	public.POST("/user/create",app.CreateUser)
+	public.POST("/user/create", app.CreateUser)
 	public.POST("/login", app.Login)
 
 	api := e.Group("/api")
-	api.Use(Authentication)
+	api.Use(middleware.Authentication)
 
 	api.GET("/users", app.GetAllUsers)
 	api.GET("/user/:id", app.GetUser)
-	
+
 	account := api.Group("/account")
 	account.GET("/:id", app.GetUserAccounts)
 	account.GET("/transactions/:id", app.ViewTransactions)
