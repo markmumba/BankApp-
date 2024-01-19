@@ -15,7 +15,6 @@ func Authentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		cookie, err := c.Cookie("token")
-		fmt.Println(cookie.Value)
 		if err != nil {
 			fmt.Println(cookie)
 			c.JSON(http.StatusBadRequest, err.Error())

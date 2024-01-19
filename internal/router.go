@@ -9,7 +9,7 @@ import (
 
 func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
 
-	public := e.Group("/apip")
+	public := e.Group("/api")
 	public.POST("/user/create", app.CreateUser)
 	public.POST("/login", app.Login)
 
