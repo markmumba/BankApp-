@@ -53,6 +53,7 @@ func (app *Applicaton) CheckBalance(balance string, amount string) bool {
 func (app *Applicaton) DepositHelper(balance string, amount string) decimal.Decimal {
 	return app.ConvertStringToDecimal(balance).Add(app.ConvertStringToDecimal(amount))
 }
+
 func (app *Applicaton) WithdrawHelper(balance string, amount string) decimal.Decimal {
 	return app.ConvertStringToDecimal(balance).Sub(app.ConvertStringToDecimal(amount))
 }
