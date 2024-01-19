@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +15,9 @@ func Authentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		cookie, err := c.Cookie("token")
+		fmt.Println(cookie.Value)
 		if err != nil {
+			fmt.Println(cookie)
 			c.JSON(http.StatusBadRequest, err.Error())
 		}
 		token, err := jwt.ParseWithClaims(cookie.Value, &handlers.CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
@@ -31,7 +34,6 @@ func Authentication(next echo.HandlerFunc) echo.HandlerFunc {
 				"message": "unauthorized",
 			})
 
-		
 		}
 		return next(c)
 	}
