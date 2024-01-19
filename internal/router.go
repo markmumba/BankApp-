@@ -13,13 +13,13 @@ func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
 	public.POST("/user/create", app.CreateUser)
 	public.POST("/login", app.Login)
 
-	api := e.Group("/api")
-	api.Use(middleware.Authentication)
+	protected := e.Group("/api")
+	protected.Use(middleware.Authentication)
 
-	api.GET("/users", app.GetAllUsers)
-	api.GET("/user/:id", app.GetUser)
+	protected.GET("/users", app.GetAllUsers)
+	protected.GET("/user/:id", app.GetUser)
 
-	account := api.Group("/account")
+	account := protected.Group("/account")
 	account.GET("/:id", app.GetUserAccounts)
 	account.GET("/transactions/:id", app.ViewTransactions)
 
