@@ -1,12 +1,14 @@
-package handlers 
+package handlers
 
 import (
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/markmumba/chasebank/config"
 	"github.com/markmumba/chasebank/internal/database"
 	"github.com/shopspring/decimal"
 )
@@ -68,3 +70,30 @@ func (app *Applicaton) FindAccountHelper(c echo.Context, parseId uuid.UUID) []da
 	return userAccounts
 }
 
+func (app *Applicaton) ConvertDBUser(user database.User) User {
+	return User{
+		UserId:   user.UserID.String(),
+		UserName: user.Username,
+		Email:    user.Email,
+		FullName: user.FullName,
+	}
+}
+
+func (app *Applicaton) GetUserIdFromToken(c echo.Context) string {
+
+	cookie, err := c.Cookie("token")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+	}
+	token, err := jwt.ParseWithClaims(cookie.Value, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte(config.Config("SECRET_KEY")), nil
+	})
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	claims := token.Claims.(*CustomClaims)
+	id := claims.Issuer
+	return id
+
+}

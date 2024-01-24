@@ -11,7 +11,7 @@ const (
 	Savings       = "savings"
 	Deposit       = "deposit"
 	Withdraw      = "withdraw"
-	TransferFunds = "transfer_funds"
+	TransferFunds = "transferFunds"
 )
 
 type CustomClaims struct {
@@ -20,24 +20,25 @@ type CustomClaims struct {
 }
 
 type AccountType struct {
-	Type string `json:"account_type"`
+	Type string `json:"accountType"`
 }
 
 type User struct {
-	UserName string `json:"user_name"`
+	UserId string `json:"userId"`
+	UserName string `json:"userName"`
 	Email    string `json:"email"`
-	FullName string `json:"full_name"`
+	FullName string `json:"fullName"`
 	Password string `json:"password"`
 	Token    string `json:"token"`
 }
 
 type Account struct {
-	AccountType string `json:"account_type"`
+	AccountType string `json:"accountType"`
 	Amount      string `json:"amount"`
 }
 
 type Transaction struct {
-	RecepientAccount string    `json:"recepient_account"`
+	RecepientAccount string    `json:"recepientAccount"`
 	Amount           string    `json:"amount"`
 	Type             string    `json:"type"`
 	Timestamp        time.Time `json:"timestamp"`

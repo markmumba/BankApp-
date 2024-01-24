@@ -4,7 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/markmumba/chasebank/internal/handlers"
-	"github.com/markmumba/chasebank/internal/middleware"
+	//"github.com/markmumba/chasebank/internal/middleware"
 )
 
 func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
@@ -12,12 +12,13 @@ func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
 	public := e.Group("/api")
 	public.POST("/user/create", app.CreateUser)
 	public.POST("/login", app.Login)
+	public.POST("/logout", app.Logout)
 
 	protected := e.Group("/api")
-	protected.Use(middleware.Authentication)
+	//protected.Use(middleware.Authentication)
 
 	protected.GET("/users", app.GetAllUsers)
-	protected.GET("/user/:id", app.GetUser)
+	protected.GET("/user", app.GetUser)
 
 	account := protected.Group("/account")
 	account.GET("/:id", app.GetUserAccounts)

@@ -1,5 +1,4 @@
-package handlers 
-
+package handlers
 
 import (
 	"fmt"
@@ -14,8 +13,6 @@ import (
 	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/bcrypt"
 )
-
-
 
 type newuserDetails struct {
 	UserName      string          `json:"user_name"`
@@ -79,14 +76,14 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 
 func (app *Applicaton) GetAllUsers(c echo.Context) error {
 
-	userList := []database.User{}
+	userList := []User{}
 
 	users, err := app.DB.GetAllUsers(app.Ctx)
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
 	for _, user := range users {
-		userList = append(userList, user)
+		userList = append(userList, app.ConvertDBUser(user))
 	}
 
 	return c.JSON(http.StatusOK, userList)
@@ -94,7 +91,8 @@ func (app *Applicaton) GetAllUsers(c echo.Context) error {
 func (app *Applicaton) GetUser(c echo.Context) error {
 	accountDetails := map[string]string{}
 
-	id := c.Param("id")
+	id := app.GetUserIdFromToken(c)
+
 	parseId := app.ConvertStringToUuid(id)
 
 	user, err := app.DB.FindUser(app.Ctx, parseId)
@@ -159,4 +157,17 @@ func (app *Applicaton) Login(c echo.Context) error {
 	user.Password = ""
 	return c.JSON(http.StatusOK, user)
 
+}
+func (app *Applicaton) Logout(c echo.Context) error {
+	cookie := &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
+		HttpOnly: true,
+	}
+
+	c.SetCookie(cookie)
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Logout successful",
+	})
 }
