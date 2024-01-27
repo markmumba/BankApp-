@@ -14,7 +14,7 @@ import (
 func (app *Applicaton) CreateSavingAccount(c echo.Context) error {
 	var jsonResp string
 
-	id := c.Param("id")
+	id := app.GetUserIdFromToken(c)
 	parsedId := app.ConvertStringToUuid(id)
 
 	account, err := app.DB.CreateAccount(app.Ctx, database.CreateAccountParams{
