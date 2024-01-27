@@ -49,7 +49,7 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	var transactions []database.Transaction
 	var jsonResp []Transaction
 
-	id := c.Param("id")
+	id := app.GetUserIdFromToken(c)
 	err := c.Bind(&accountType)
 	parsedId := app.ConvertStringToUuid(id)
 	userAccounts := app.FindAccountHelper(c, parsedId)

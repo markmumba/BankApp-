@@ -35,7 +35,8 @@ func (app *Applicaton) GetUserAccounts(c echo.Context) error {
 
 	accountDetails := map[string]map[string]string{}
 
-	id := c.Param("id")
+
+	id := app.GetUserIdFromToken(c)
 	parseId := app.ConvertStringToUuid(id)
 
 	userAccounts := app.FindAccountHelper(c, parseId)
@@ -54,7 +55,7 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 	var accountStruct Account
 	var jsonResp Account
 
-	id := c.Param("id")
+	id := app.GetUserIdFromToken(c)
 	err := c.Bind(&accountStruct)
 	if err != nil {
 		app.ServerError(c, "Failed to get account details")
@@ -93,11 +94,11 @@ func (app *Applicaton) Withdraw(c echo.Context) error {
 	var accountStruct Account
 	var jsonResp Account
 
-	id := c.Param("id")
 	err := c.Bind(&accountStruct)
 	if err != nil {
 		app.ServerError(c, "failed to get account details")
 	}
+	id := app.GetUserIdFromToken(c)
 	parsedId := app.ConvertStringToUuid(id)
 	userAccounts := app.FindAccountHelper(c, parsedId)
 
@@ -133,7 +134,7 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 
 	var accountInstance Account
 
-	id := c.Param("id")
+	id := app.GetUserIdFromToken(c)
 	parseId := app.ConvertStringToUuid(id)
 	err := c.Bind(&accountInstance)
 
@@ -190,7 +191,7 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 
 	params := parameters{}
 
-	id := c.Param("id")
+	id := app.GetUserIdFromToken(c)
 	parsedId := app.ConvertStringToUuid(id)
 	err := c.Bind(&params)
 	if err != nil {

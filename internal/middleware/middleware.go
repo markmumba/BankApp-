@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
 
@@ -17,7 +16,6 @@ func Authentication(next echo.HandlerFunc) echo.HandlerFunc {
 
 		cookie, err := c.Cookie("token")
 		if err != nil {
-			fmt.Println(cookie)
 			c.JSON(http.StatusBadRequest, err.Error())
 		}
 		token, err := jwt.ParseWithClaims(cookie.Value, &handlers.CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
