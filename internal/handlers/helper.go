@@ -97,3 +97,18 @@ func (app *Applicaton) GetUserIdFromToken(c echo.Context) string {
 	return id
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
