@@ -83,7 +83,6 @@ func (app *Applicaton) Deposit(c echo.Context) error {
 			}
 		}
 
-		break
 	}
 
 	return c.JSON(http.StatusOK, jsonResp)

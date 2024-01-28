@@ -1,4 +1,4 @@
-package handlers 
+package handlers
 
 //TODO get all transactions
 
@@ -70,12 +70,19 @@ func (app *Applicaton) ViewTransactions(c echo.Context) error {
 	}
 
 	for _, transaction := range transactions {
-		account, err := app.DB.FindAccountById(app.Ctx, transaction.RecepientID.Int32)
-		if err != nil {
-			app.ServerError(c, "unable to find recipeint account")
+		var recepientAccount string
+
+		if transaction.Type == "deposit" || transaction.Type == "withdraw" {
+			recepientAccount = ""
+		} else {
+			account, err := app.DB.FindAccountById(app.Ctx, transaction.RecepientID.Int32)
+			if err != nil {
+				app.ServerError(c, "Unable to find recipient account")
+			}
+			recepientAccount = account.AccountNumber
 		}
 		newTransaction := Transaction{
-			RecepientAccount: account.AccountNumber,
+			RecepientAccount: recepientAccount,
 			Amount:           transaction.Amount,
 			Type:             transaction.Type,
 			Timestamp:        transaction.Timestamp.Time,

@@ -21,12 +21,12 @@ func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
 	protected.GET("/user", app.GetUser)
 
 	account := protected.Group("/account")
-	account.GET("/:id", app.GetUserAccounts)
-	account.GET("/transactions/:id", app.ViewTransactions)
+	account.GET("/", app.GetUserAccounts)
+	account.GET("/transactions", app.ViewTransactions)
 
-	account.POST("/:id", app.CreateSavingAccount)
-	account.POST("/deposit/:id", app.Deposit)
-	account.POST("/withdraw/:id", app.Withdraw)
-	account.POST("/checktosave/:id", app.TransferCheckingToSaving)
-	account.POST("/transferfunds/:id", app.TransferFunds)
+	account.POST("/create", app.CreateSavingAccount)
+	account.POST("/deposit", app.Deposit)
+	account.POST("/withdraw", app.Withdraw)
+	account.POST("/checktosave", app.TransferCheckingToSaving)
+	account.POST("/transferfunds", app.TransferFunds)
 }

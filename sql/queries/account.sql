@@ -17,7 +17,8 @@ SELECT
   a.account_id,
   a.account_number,
   a.account_type,
-  a.balance
+  a.balance,
+  a.date_opened
 FROM
   users u
   JOIN accounts a ON u.user_id = a.user_id

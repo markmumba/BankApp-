@@ -88,9 +88,9 @@ func (app *Applicaton) GetAllUsers(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, userList)
 }
-func (app *Applicaton) GetUser(c echo.Context) error {
-	accountDetails := map[string]string{}
 
+func (app *Applicaton) GetUser(c echo.Context) error {
+	accountDetailList := []map[string]string{}
 	id := app.GetUserIdFromToken(c)
 
 	parseId := app.ConvertStringToUuid(id)
@@ -104,12 +104,21 @@ func (app *Applicaton) GetUser(c echo.Context) error {
 		app.ServerError(c, "could not find accounts ")
 	}
 	for _, account := range accounts {
-		accountDetails[account.AccountNumber] = account.AccountType
+
+		accountDetails := map[string]string{
+			"accountNumber": account.AccountNumber,
+			"accountType":   account.AccountType,
+			"balance":       account.Balance,
+			"dateJoined":    account.DateOpened.Time.String(),
+		}
+
+		accountDetailList = append(accountDetailList, accountDetails)
+
 	}
 
-	return c.JSON(http.StatusOK, map[string]map[string]string{
-		"user":    {"username": user.Username, "email": user.Email},
-		"account": accountDetails,
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"user":    map[string]string{"username": user.Username, "fullname": user.FullName},
+		"account": accountDetailList,
 	})
 }
 
