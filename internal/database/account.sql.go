@@ -248,25 +248,42 @@ func (q *Queries) GetAllAccounts(ctx context.Context) ([]Account, error) {
 
 const viewTransactions = `-- name: ViewTransactions :many
 SELECT
-  transaction_id, account_id, recepient_id, amount, type, timestamp
+  t.transaction_id,
+  t.account_id,
+  t.recepient_id,
+  t.amount,
+  t.type,
+  t.timestamp,
+  a.account_type
 FROM
-  transactions
+  transactions t
+  JOIN accounts a ON t.account_id = a.account_id
 WHERE
-  account_id = $1
-  OR recepient_id = $1
+  t.account_id = $1
+  OR t.recepient_id = $1
 ORDER BY
   timestamp DESC
 `
 
-func (q *Queries) ViewTransactions(ctx context.Context, accountID sql.NullInt32) ([]Transaction, error) {
+type ViewTransactionsRow struct {
+	TransactionID int32
+	AccountID     sql.NullInt32
+	RecepientID   sql.NullInt32
+	Amount        string
+	Type          string
+	Timestamp     sql.NullTime
+	AccountType   string
+}
+
+func (q *Queries) ViewTransactions(ctx context.Context, accountID sql.NullInt32) ([]ViewTransactionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, viewTransactions, accountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Transaction
+	var items []ViewTransactionsRow
 	for rows.Next() {
-		var i Transaction
+		var i ViewTransactionsRow
 		if err := rows.Scan(
 			&i.TransactionID,
 			&i.AccountID,
@@ -274,6 +291,7 @@ func (q *Queries) ViewTransactions(ctx context.Context, accountID sql.NullInt32)
 			&i.Amount,
 			&i.Type,
 			&i.Timestamp,
+			&i.AccountType,
 		); err != nil {
 			return nil, err
 		}
