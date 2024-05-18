@@ -15,8 +15,9 @@ func Authentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		cookie, err := c.Cookie("token")
-		if err != nil {
+		if err != nil || cookie == nil {
 			c.JSON(http.StatusBadRequest, err.Error())
+			return err
 		}
 		token, err := jwt.ParseWithClaims(cookie.Value, &handlers.CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
 			return []byte(config.Config("SECRET_KEY")), nil

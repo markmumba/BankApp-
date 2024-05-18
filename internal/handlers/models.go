@@ -19,12 +19,8 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-type AccountType struct {
-	Type string `json:"accountType"`
-}
-
 type User struct {
-	UserId string `json:"userId"`
+	UserId   string `json:"userId"`
 	UserName string `json:"userName"`
 	Email    string `json:"email"`
 	FullName string `json:"fullName"`
@@ -42,4 +38,5 @@ type Transaction struct {
 	Amount           string    `json:"amount"`
 	Type             string    `json:"type"`
 	Timestamp        time.Time `json:"timestamp"`
+	AccountType      string    `json:"accountType"`
 }

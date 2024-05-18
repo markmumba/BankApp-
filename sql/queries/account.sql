@@ -17,7 +17,8 @@ SELECT
   a.account_id,
   a.account_number,
   a.account_type,
-  a.balance
+  a.balance,
+  a.date_opened
 FROM
   users u
   JOIN accounts a ON u.user_id = a.user_id
@@ -63,12 +64,19 @@ WHERE
 
 -- name: ViewTransactions :many 
 SELECT
-  *
+  t.transaction_id,
+  t.account_id,
+  t.recepient_id,
+  t.amount,
+  t.type,
+  t.timestamp,
+  a.account_type
 FROM
-  transactions
+  transactions t
+  JOIN accounts a ON t.account_id = a.account_id
 WHERE
-  account_id = $1
-  OR recepient_id = $1
+  t.account_id = $1
+  OR t.recepient_id = $1
 ORDER BY
   timestamp DESC;
 
