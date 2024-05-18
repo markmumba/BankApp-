@@ -136,6 +136,9 @@ func (app *Applicaton) TransferCheckingToSaving(c echo.Context) error {
 	id := app.GetUserIdFromToken(c)
 	parseId := app.ConvertStringToUuid(id)
 	err := c.Bind(&accountInstance)
+	if err != nil {
+		app.ServerError(c, err.Error())
+	}
 
 	userAccounts := app.FindAccountHelper(c, parseId)
 
@@ -214,7 +217,7 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 				app.ServerError(c, err.Error())
 			}
 		}
-		break
+
 	}
 
 	accountReceiving, err = qtx.FindAccountByAccNo(app.Ctx, params.AccountNumber)
@@ -228,11 +231,17 @@ func (app *Applicaton) TransferFunds(c echo.Context) error {
 			Balance:   app.WithdrawHelper(accountSending.Balance, params.Amount).String(),
 			AccountID: accountSending.AccountID,
 		})
+		if err != nil {
+			app.ServerError(c, err.Error())
+		}
 
 		_, err = qtx.Deposit(app.Ctx, database.DepositParams{
 			Balance:   app.DepositHelper(accountReceiving.Balance, params.Amount).String(),
 			AccountID: accountReceiving.AccountID,
 		})
+		if err != nil {
+			app.ServerError(c, err.Error())
+		}
 
 		err = app.SaveTransactionFunds(c, accountSending.AccountID, accountReceiving.AccountID, params.Amount, TransferFunds)
 		if err != nil {
