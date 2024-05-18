@@ -152,7 +152,7 @@ func (app *Applicaton) Login(c echo.Context) error {
 		HttpOnly: true,
 	})
 
-	user.UserName = userDetalis.UserID.String()
+	user.UserId = userDetalis.UserID.String()
 	user.Token = t
 	user.Password = ""
 	return c.JSON(http.StatusOK, user)
