@@ -44,43 +44,52 @@ func (app *Applicaton) SaveTransactionFunds(c echo.Context, accoutId int32, reci
 }
 
 func (app *Applicaton) ViewTransactions(c echo.Context) error {
+    var accountType AccountType
+    var transactions []database.Transaction
+    var jsonResp []Transaction
 
-	var accountType AccountType
-	var transactions []database.Transaction
-	var jsonResp []Transaction
+    id := app.GetUserIdFromToken(c)
+    err := c.Bind(&accountType)
+    if err != nil {
+        return app.ServerError(c, err.Error())
+    }
+    parsedId := app.ConvertStringToUuid(id)
+    userAccounts := app.FindAccountHelper(c, parsedId)
 
-	id := app.GetUserIdFromToken(c)
-	err := c.Bind(&accountType)
-	parsedId := app.ConvertStringToUuid(id)
-	userAccounts := app.FindAccountHelper(c, parsedId)
+    found := false
+    for _, acc := range userAccounts {
+        if accountType.Type == acc.AccountType {
+            transactions, err = app.DB.ViewTransactions(app.Ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
+            if err != nil {
+                return app.ServerError(c, "Failed to retrieve the transactions")
+            }
+            found = true
+            break
+        }
+    }
+    if (!found) {
+        return c.JSON(http.StatusNotFound, map[string]string{"error": "Account not found"})
+    }
 
-	found := false
-	for _, acc := range userAccounts {
-		if accountType.Type == acc.AccountType {
-			transactions, err = app.DB.ViewTransactions(app.Ctx, sql.NullInt32{Int32: acc.AccountID, Valid: true})
-			if err != nil {
-				app.ServerError(c, "Failed to retrieve the transactions ")
-			}
-			found = true
-			break
-		}
-	}
-	if !found {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Account not found"})
-	}
+    for _, transaction := range transactions {
+        var recipientAccountNumber string
+        if transaction.RecepientID.Valid {
+            account, err := app.DB.FindAccountById(app.Ctx, transaction.RecepientID.Int32)
+            if err == nil {
+                recipientAccountNumber = account.AccountNumber
+            } else {
+                // Log the error but don't return an error response
+                fmt.Println("Error finding recipient account:", err)
+            }
+        }
 
-	for _, transaction := range transactions {
-		account, err := app.DB.FindAccountById(app.Ctx, transaction.RecepientID.Int32)
-		if err != nil {
-			app.ServerError(c, "unable to find recipeint account")
-		}
-		newTransaction := Transaction{
-			RecepientAccount: account.AccountNumber,
-			Amount:           transaction.Amount,
-			Type:             transaction.Type,
-			Timestamp:        transaction.Timestamp.Time,
-		}
-		jsonResp = append(jsonResp, newTransaction)
-	}
-	return c.JSON(http.StatusOK, jsonResp)
+        newTransaction := Transaction{
+            RecepientAccount: recipientAccountNumber,
+            Amount:           transaction.Amount,
+            Type:             transaction.Type,
+            Timestamp:        transaction.Timestamp.Time,
+        }
+        jsonResp = append(jsonResp, newTransaction)
+    }
+    return c.JSON(http.StatusOK, jsonResp)
 }
