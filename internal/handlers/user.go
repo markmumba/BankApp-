@@ -23,6 +23,12 @@ type newuserDetails struct {
 	Balance       decimal.Decimal `json:"balance"`
 }
 
+func (app *Applicaton) HealthCheck (c echo.Context) error {
+	return c.JSON(http.StatusOK, echo.Map{
+		"status": "ok",
+	})
+}
+
 func (app *Applicaton) CreateUser(c echo.Context) error {
 
 	var user User

@@ -10,6 +10,7 @@ import (
 func SetupRouter(e *echo.Echo, app *handlers.Applicaton) {
 
 	public := e.Group("/api")
+	public.GET("/health", app.HealthCheck)
 	public.POST("/user/create", app.CreateUser)
 	public.POST("/login", app.Login)
 	public.POST("/logout", app.Logout)
