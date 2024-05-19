@@ -36,7 +36,6 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 	if err != nil {
 		app.ServerError(c, "Failed to bind to user struct")
 	}
-	fmt.Println(user)
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 	if err != nil {
@@ -50,7 +49,6 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 		FullName:     user.FullName,
 		PasswordHash: string(hashedPassword),
 	})
-	fmt.Println(result.Email,result.FullName,result.Username,result.PasswordHash)
 
 	if err != nil {
 		app.ServerError(c, err.Error())
@@ -60,13 +58,11 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 		AccountType: Checking,
 	})
 
-	fmt.Println(account)
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
 
 	balance, err := decimal.NewFromString(account.Balance)
-	fmt.Println(balance)
 
 	if err != nil {
 		fmt.Println(err)
