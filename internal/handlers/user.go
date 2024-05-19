@@ -23,7 +23,7 @@ type newuserDetails struct {
 	Balance       decimal.Decimal `json:"balance"`
 }
 
-func (app *Applicaton) HealthCheck (c echo.Context) error {
+func (app *Applicaton) HealthCheck(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"status": "ok",
 	})
@@ -49,10 +49,10 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 		FullName:     user.FullName,
 		PasswordHash: string(hashedPassword),
 	})
+
 	if err != nil {
 		app.ServerError(c, err.Error())
 	}
-
 	account, err := app.DB.CreateAccount(c.Request().Context(), database.CreateAccountParams{
 		UserID:      uuid.NullUUID{UUID: result.UserID, Valid: true},
 		AccountType: Checking,
@@ -63,8 +63,10 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 	}
 
 	balance, err := decimal.NewFromString(account.Balance)
+
 	if err != nil {
-		fmt.Println("Unable to convert to decimal")
+		fmt.Println(err)
+		app.ServerError(c,err.Error())
 	}
 
 	newUserDetails := newuserDetails{
