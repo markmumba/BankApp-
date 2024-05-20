@@ -7,16 +7,16 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgresql://postgres:YMNCgcDIXGFFjTCPBHssUFfXxajttktM@monorail.proxy.rlwy.net:45813/railway
+      DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: "secret"
     depends_on:
       - postgres
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: YMNCgcDIXGFFjTCPBHssUFfXxajttktM
-      POSTGRES_DB: railway
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes: 
