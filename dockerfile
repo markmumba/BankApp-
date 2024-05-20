@@ -14,7 +14,7 @@ RUN go mod download
 # Copy the entire project directory to the working directory inside the container
 COPY . .
 
-COPY .env .env
+COPY .env .
 
 # Build the Go application
 RUN go build -o main ./cmd/api/main.go
