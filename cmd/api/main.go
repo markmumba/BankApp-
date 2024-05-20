@@ -35,6 +35,11 @@ func main() {
 	defer config.ConnectDB(config.Config("DATABASE_URL")).SDB.Close()
 
 	internal.SetupRouter(e, Applicaton)
-	e.Logger.Fatal(e.Start(":" + config.Config("PORT")))
+	port := config.Config("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
+	e.Logger.Fatal(e.Start(":" + port))
 
 }
