@@ -23,8 +23,7 @@ RUN go build -o /app/out
 FROM alpine:latest
 
 # Install any runtime dependencies (if needed)
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-
+RUN apk --no-cache add ca-certificates
 # Copy the prebuilt binary from the build stage
 COPY --from=build /app/out /app/out
 
