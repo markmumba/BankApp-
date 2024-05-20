@@ -19,8 +19,11 @@ WORKDIR /app/cmd/api
 # Build the Go app
 RUN go build -o /app/out
 
-# Use a minimal image as the base for the final stage
-FROM gcr.io/distroless/base-debian10
+# Use a compatible base image with the required glibc version
+FROM debian:bullseye-slim
+
+# Install any runtime dependencies (if needed)
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Copy the prebuilt binary from the build stage
 COPY --from=build /app/out /app/out
