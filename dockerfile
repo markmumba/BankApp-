@@ -17,11 +17,12 @@ COPY . .
 COPY .env .
 
 # Build the Go application
-RUN go build -o main ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux  go build -o main ./cmd/api/main.go
 
 # Start a new stage from a minimal image
 FROM alpine:latest
 
+RUN apk --no-cache add ca-certificates
 # Set the working directory inside the container
 WORKDIR /root/
 
