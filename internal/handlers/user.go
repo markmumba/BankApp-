@@ -66,7 +66,7 @@ func (app *Applicaton) CreateUser(c echo.Context) error {
 
 	if err != nil {
 		fmt.Println(err)
-		app.ServerError(c,err.Error())
+		app.ServerError(c, err.Error())
 	}
 
 	newUserDetails := newuserDetails{
@@ -164,10 +164,10 @@ func (app *Applicaton) Login(c echo.Context) error {
 
 	c.SetCookie(&http.Cookie{
 		Name:     "token",
-        Value:    t,
-        Expires:  time.Now().Add(time.Hour * 72),
-        Secure:   true,   // Send the cookie only over HTTPS (in production)
-	
+		Value:    t,
+		Expires:  time.Now().Add(time.Hour * 72),
+		Secure:   true, // Send the cookie only over HTTPS (in production)
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	user.UserId = userDetalis.UserID.String()
@@ -178,9 +178,9 @@ func (app *Applicaton) Login(c echo.Context) error {
 }
 func (app *Applicaton) Logout(c echo.Context) error {
 	cookie := &http.Cookie{
-		Name:     "token",
-		Value:    "",
-		Expires:  time.Now().Add(-time.Hour),
+		Name:    "token",
+		Value:   "",
+		Expires: time.Now().Add(-time.Hour),
 	}
 
 	c.SetCookie(cookie)
