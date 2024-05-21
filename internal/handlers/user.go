@@ -168,6 +168,8 @@ func (app *Applicaton) Login(c echo.Context) error {
 		Expires:  time.Now().Add(time.Hour * 72),
 		Secure:   true, // Send the cookie only over HTTPS (in production)
 		SameSite: http.SameSiteNoneMode,
+		HttpOnly: true, // Disallow JavaScript access
+
 	})
 
 	user.UserId = userDetalis.UserID.String()
