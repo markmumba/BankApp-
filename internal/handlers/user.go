@@ -179,7 +179,6 @@ func (app *Applicaton) Logout(c echo.Context) error {
 		Name:     "token",
 		Value:    "",
 		Expires:  time.Now().Add(-time.Hour),
-		HttpOnly: true,
 	}
 
 	c.SetCookie(cookie)
