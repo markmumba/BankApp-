@@ -167,7 +167,6 @@ func (app *Applicaton) Login(c echo.Context) error {
         Value:    t,
         Expires:  time.Now().Add(time.Hour * 72),
         Secure:   true,   // Send the cookie only over HTTPS (in production)
-        SameSite: http.SameSiteLaxMode, // Helps prevent CSRF attacks
 	
 	})
 
