@@ -19,9 +19,10 @@ func main() {
 		Format: "method=${method}, uri=${uri}, status=${status}\n",
 	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8000","https://bankclient-production.up.railway.app/","https://bankclient-o5txakziz-markmumbas-projects.vercel.app/"},
-		AllowCredentials: true,
+		AllowOrigins:     []string{"https://bankclient.vercel.app", "http://localhost:8000"},
 		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowCredentials: true,
 	}))
 
 	appContex := context.Background()
