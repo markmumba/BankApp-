@@ -164,8 +164,10 @@ func (app *Applicaton) Login(c echo.Context) error {
 
 	c.SetCookie(&http.Cookie{
 		Name:     "token",
-		Value:    t,
-		Expires:  time.Now().Add(time.Hour * 72),
+        Value:    t,
+        Expires:  time.Now().Add(time.Hour * 72),
+        Secure:   true,   // Send the cookie only over HTTPS (in production)
+	
 	})
 
 	user.UserId = userDetalis.UserID.String()
