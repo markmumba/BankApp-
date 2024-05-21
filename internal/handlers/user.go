@@ -166,8 +166,6 @@ func (app *Applicaton) Login(c echo.Context) error {
 		Name:     "token",
         Value:    t,
         Expires:  time.Now().Add(time.Hour * 72),
-        Path:     "/",    // Allow access from any path on your domain
-        Domain:   "bankclient.vercel.app", // Your frontend domain
         Secure:   true,   // Send the cookie only over HTTPS (in production)
         SameSite: http.SameSiteLaxMode, // Helps prevent CSRF attacks
 	
