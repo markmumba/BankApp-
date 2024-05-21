@@ -166,7 +166,6 @@ func (app *Applicaton) Login(c echo.Context) error {
 		Name:     "token",
 		Value:    t,
 		Expires:  time.Now().Add(time.Hour * 72),
-		HttpOnly: true,
 	})
 
 	user.UserId = userDetalis.UserID.String()
